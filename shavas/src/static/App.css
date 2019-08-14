@@ -1,0 +1,105 @@
+h1 {
+  font-family: "Gill Sans", "Gill Sans MT", "Calibri", "Trebuchet MS",
+    sans-serif;
+  margin: auto;
+  padding: 13px 0px 0px 0px;
+  width: max-content;
+}
+h2 {
+  font-family: "Gill Sans", "Gill Sans MT", "Calibri", "Trebuchet MS",
+    sans-serif;
+  margin: auto;
+  padding: 0 0 29px 0;
+  text-align: center;
+  width: max-content;
+}
+hr {
+  border: none;
+  border-top: 1px solid #aaaaaa;
+  border-bottom: 1px solid #ffffff;
+  clear: both;
+  display: block;
+  font-size: 1px;
+  height: 0;
+  line-height: 0;
+  max-height: 0;
+  margin: 8px auto;
+  padding: 0;
+  position: relative;
+  width: 100%;
+}
+canvas {
+  -webkit-box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.75);
+  -moz-box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.75);
+  box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.75);
+}
+.canvasHasBeenSet {
+  -webkit-box-shadow: 0px 0px 10px 0px rgba(221, 105, 105, 0.75);
+  -moz-box-shadow: 0px 0px 10px 0px rgba(221, 105, 105, 0.75);
+  box-shadow: 0px 0px 10px 0px rgba(221, 105, 105, 0.75);
+  transition: box-shadow 0.15s ease-in-out;
+}
+
+button {
+  border-radius: 8px;
+  height: 25px;
+  margin: 10px 10px;
+  transition: background-color 0.35s ease-in-out;
+  width: 100%;
+}
+button:hover {
+  cursor: pointer;
+  background-color: #ffdbb8;
+  transition: background-color 0.25s ease-in-out;
+}
+
+.App {
+  margin: auto;
+  width: fit-content;
+}
+
+.canvas-block-holder {
+  display: -moz-inline-grid;
+  display: -ms-inline-grid;
+  display: inline-grid;
+  margin: 20px;
+}
+
+.button-container {
+  display: flex;
+}
+
+#generateButton {
+  margin: auto;
+  width: fit-content;
+}
+#generateButton button {
+  -webkit-box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.75);
+  -moz-box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.75);
+  box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.75);
+  font-size: 1em;
+  height: 38px;
+  transition: box-shadow 0.15s ease-in-out;
+  width: 300px;
+}
+#generateButton button:hover {
+  transition: box-shadow 0.15s ease-in-out;
+}
+
+@keyframes fadeInOpacity {
+	0% {
+		opacity: 0;
+	}
+	100% {
+		opacity: 1;
+	}
+}
+#identifyer-container {
+	animation-name: fadeInOpacity;
+	animation-iteration-count: 1;
+	animation-timing-function: ease-in;
+	animation-duration: 0.5s;
+	opacity: 1;
+  margin: auto;
+  width: fit-content;
+}
