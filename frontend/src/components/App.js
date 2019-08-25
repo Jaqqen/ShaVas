@@ -1,27 +1,24 @@
 import React, { Component } from "react";
 import "./../static/App.css";
 import CanvasBlock from "./CanvasBlock";
+import MyCanvas from "./MyCanvas";
 
 export default class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      trainDrawings: [],
-      identifyerDrawing: null,
+      canvasNamesWithInteraction: [],
       disableGenerateButton: false,
       identifyerCanvas: false,
+      identifyerDrawing: null,
+      interactionCounter: 0,
       myInterval: null,
+      trainDrawings: [],
     };
-    this.appendDrawingToState = this.appendDrawingToState.bind(this);
     this.fetchIfNeuralNetwork = this.fetchIfNeuralNetwork.bind(this);
-    this.sendDataToBackend = this.sendDataToBackend.bind(this);
+    // this.sendDataToBackend = this.sendDataToBackend.bind(this);
+    this.registerCanvasInteractions = this.registerCanvasInteractions.bind(this);
     this.setIdentifyerDrawing = this.setIdentifyerDrawing.bind(this);
-  }
-
-  appendDrawingToState(canvasDataURL) {
-    this.setState(prevState => ({
-      trainDrawings: [...prevState.trainDrawings, canvasDataURL]
-    }));
   }
 
   componentDidMount() {
@@ -30,7 +27,9 @@ export default class App extends Component {
   }
 
   componentDidUpdate() {
-    console.log('trainDrawings', this.state);
+    // console.log('=============');
+    // console.log('CURRENT STATE --- APP.JS', this.state);
+    // console.log('=============');
   }
 
   componentWillUnmount() {
@@ -77,16 +76,15 @@ export default class App extends Component {
       .catch(error => console.log('Error', error))
   }
 
-  // TODO: NEEDS TO BE COMBINED WITH GENERATE
   // POST - DATA TO BACKEND
   async sendDataToBackend() {
-    if (!(this.state.trainDrawings.length > 1)) {
-      alert('Please set both drawings before generating data!')
-    }
+    const canvas0 = document.getElementById('my-canvas0').getContext('2d')['canvas'].toDataURL('image/png');
+    const canvas1 = document.getElementById('my-canvas1').getContext('2d')['canvas'].toDataURL('image/png');
+
 
     const obj = {
-      'data0': this.state.trainDrawings[0],
-      'data1': this.state.trainDrawings[1],
+      'data0': canvas0,
+      'data1': canvas1,
       'shape0': 'Shape 0',
       'shape1': 'Shape 1'
     };
@@ -113,7 +111,8 @@ export default class App extends Component {
         // this.getSample();
         this.generate();
       })
-      .catch(error => console.log('ERROR', error))
+      .catch(error => console.log('ERROR', error));
+
   }
 
   // GET - GENERATE MORE DATA AND RECEIVE CONFIRMATION THAT SAMPLES
@@ -196,47 +195,58 @@ export default class App extends Component {
     }, () => this.identifyCanvasContent());
   }
 
+  registerCanvasInteractions(canvasName) {
+    this.setState(prevState => ({
+      canvasNamesWithInteraction: [...prevState.canvasNamesWithInteraction, canvasName],
+    }));
+  }
+
+  allCanvasHaveContent() {
+    const { canvasNamesWithInteraction } = this.state;
+    if (canvasNamesWithInteraction.includes('Canvas0') && canvasNamesWithInteraction.includes('Canvas1')) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
   render() {
-    const { disableGenerateButton, trainDrawings, identifyerCanvas } = this.state;
+    const { trainDrawings, identifyerCanvas } = this.state;
+    const dimensions = { h: 300, w: 400 };
 
     return (
       <div>
         <h1>ShaVas</h1>
         <hr />
-        {identifyerCanvas === false ?
-          <React.Fragment>
-            <div className="App">
-              <CanvasBlock
-                appendDrawingToState={this.appendDrawingToState}
-                identifyer={false}
-                idNumber={0}
-              />
-              <CanvasBlock
-                appendDrawingToState={this.appendDrawingToState}
-                identifyer={false}
-                idNumber={1}
-              />
-            </div>
-            <div id="generateButton">
-              <button disabled={disableGenerateButton} type='button' onClick={this.sendDataToBackend}>
-                {disableGenerateButton === false ?
-                  trainDrawings.length === 2 ? 'Generate and train data!' : 'Please set drawings!'
-                  :
-                  identifyerCanvas === false ? 'Generating, calculating...' : 'Computing complete'
-                }
-              </button>
-            </div>
-            <hr />
-          </React.Fragment>
-          :
-          <React.Fragment></React.Fragment>
-        }
+        <div>
+          <div className="App">
+            <CanvasBlock
+              canvasDimensions={dimensions}
+              idNumber={0}
+              isIdentifyBlock={false}
+              registerCanvasInteractions={this.registerCanvasInteractions}
+
+            />
+            <CanvasBlock
+              canvasDimensions={dimensions}
+              idNumber={1}
+              isIdentifyBlock={false}
+              registerCanvasInteractions={this.registerCanvasInteractions}
+            />
+          </div>
+          <div id="generateButton">
+            <button disabled={!this.allCanvasHaveContent()} type='button' onClick={this.sendDataToBackend}>
+              {this.allCanvasHaveContent() ? 'Generate samples' : 'Please draw your shapes!'}
+            </button>
+          </div>
+          <hr />
+        </div>
         {trainDrawings.length > 1 && identifyerCanvas ?
           <div id="identifyer-container">
-            <CanvasBlock setIdentifyerDrawing={this.setIdentifyerDrawing} idNumber={2} identifyer={true}></CanvasBlock>
+            <CanvasBlock setIdentifyerDrawing={this.setIdentifyerDrawing} idNumber={2} isIdentifyBlock={true}></CanvasBlock>
           </div>
           :
-          <h2>Please set both drawings before identification.</h2>
+          <h2>Please draw in both fields identification.</h2>
         }
       </div>
     );

@@ -11,10 +11,11 @@ export default class MyCanvas extends Component {
     };
     this.canvasRef = React.createRef();
     this.clearCanvas = this.clearCanvas.bind(this);
-    this.setDrawing = this.setDrawing.bind(this);
   }
 
   componentDidMount() {
+    const { registerCanvasInteractions, idNumber } = this.props;
+
     const ctx = this.canvasRef.current.getContext("2d");
     // #### pre setup for drawing ####
     ctx.lineWidth = 6;
@@ -23,6 +24,7 @@ export default class MyCanvas extends Component {
     ctx.fillRect(0, 0, this.state.canvasWidth, this.state.canvasHeight);
     // #### when mouse is DOWN on CANVAS ####
     this.canvasRef.current.addEventListener("mousedown", e => {
+      registerCanvasInteractions("Canvas" + idNumber);
       this.setState({
         painting: true
       });
@@ -43,27 +45,19 @@ export default class MyCanvas extends Component {
     // #### passing the clearCanvas-function to the parent component ####
     this.props.selectClearingMethod(this.clearCanvas);
 
-    //#### passing the setDrawing-function to the parent component ####
-    this.props.selectSetDrawingMethod(this.setDrawing);
+  }
+
+  componentDidUpdate() {
+    // console.log('=============');
+    // console.log('CURRENT STATE --- MYCANVAS.JS', this.state);
+    // console.log(this.props.idNumber);
+    // console.log('=============');
   }
 
   componentWillUnmount() {
-    this.canvasRef.current.removeEventListener("mousedown", e => {
-      this.setState({
-        painting: false
-      });
-    });
-    // #### when mouse is UP on WINDOW ####
-    window.removeEventListener("mouseup", () => {
-      this.setState({
-        painting: false
-      });
-    });
-    // #### when mouse is MOVING on CANVAS ####
-    this.canvasRef.current.removeEventListener("mousemove", e => {
-    });
     console.log('MyCanvs ' + this.props.idNumber + ' has unmounted');
   }
+
   draw(_event, context) {
     if (this.state.drawingIsNotSet) {
       if (!this.state.painting) return;
@@ -92,18 +86,6 @@ export default class MyCanvas extends Component {
     );
   }
 
-  setDrawing() {
-    const canvasData = this.canvasRef.current.toDataURL("image/png");
-    if (!this.props.identifyer) {
-      this.props.addElementToCanvasBlockArray(canvasData);
-    } else {
-      this.props.setIdentifyerDrawing(canvasData);
-    }
-    this.setState({
-      drawingIsNotSet: false,
-    });
-  }
-
   render() {
     return (
       <React.Fragment>
@@ -111,8 +93,8 @@ export default class MyCanvas extends Component {
           className={this.state.drawingIsNotSet ? null : 'canvasHasBeenSet'}
           id={"my-canvas" + this.props.idNumber}
           ref={this.canvasRef}
-          height={this.state.canvasHeight}
-          width={this.state.canvasWidth}
+          height={this.props._dimensions.h}
+          width={this.props._dimensions.w}
         />
       </React.Fragment>
     );

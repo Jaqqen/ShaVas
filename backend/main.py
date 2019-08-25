@@ -40,24 +40,30 @@ def clear_datalist():
 
 @app.route('/send_canvas', methods=['POST'])
 def send_canvas():
+    json_Obj = request.get_json();
 
-    data_list.append(request.get_json()['data0'])
-    data_list.append(request.get_json()['data1'])
-    shape_list.append(request.get_json()['shape0'])
-    shape_list.append(request.get_json()['shape1'])
+    data_list.append(json_Obj['data0'])
+    data_list.append(json_Obj['data1'])
+    shape_list.append(json_Obj['shape0'])
+    shape_list.append(json_Obj['shape1'])
     print("============================ \n")
     print("SEND_CANVAS \n")
-    print("============================ \n")
     for index, data in enumerate(data_list):
         header, encoded = data.split(",", 1)
         decoded_data = base64.b64decode(encoded)
-        path = './drawnImages/canvasImage_' + str(index) + '.png'
+        path = '../drawnImages/canvasImage_' + str(index) + '.png'
         with open(path, 'wb') as f:
             f.write(decoded_data)
         image_list.append(
             supF.convertPixelValues(supF.prepareImageBeforeConversion(path)))
+    print("============================ \n")
+    print("============================ \n")
+    print("!!!!!!!!!GENERATE!!!!!!!!")
+    Thread(target=createMultipleSamples).start()
+    print("============================ \n")
 
-    return jsonify('saved Images'), 200
+
+    return jsonify('Saved Images and generation of data has started, please wait.'), 200
 
 
 @app.route('/if_neural_network', methods=['GET'])
