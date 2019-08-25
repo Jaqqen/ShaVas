@@ -11,10 +11,12 @@ export default class MyCanvas extends Component {
     };
     this.canvasRef = React.createRef();
     this.clearCanvas = this.clearCanvas.bind(this);
-    this.setDrawing = this.setDrawing.bind(this);
+    MyCanvas.setDrawing = MyCanvas.setDrawing.bind(this);
   }
 
   componentDidMount() {
+    const { registerCanvasInteractions, idNumber } = this.props;
+
     const ctx = this.canvasRef.current.getContext("2d");
     // #### pre setup for drawing ####
     ctx.lineWidth = 6;
@@ -23,10 +25,12 @@ export default class MyCanvas extends Component {
     ctx.fillRect(0, 0, this.state.canvasWidth, this.state.canvasHeight);
     // #### when mouse is DOWN on CANVAS ####
     this.canvasRef.current.addEventListener("mousedown", e => {
+      registerCanvasInteractions("Canvas" + idNumber);
       this.setState({
         painting: true
       });
       this.draw(e, ctx);
+
     });
     // #### when mouse is UP on WINDOW ####
     window.addEventListener("mouseup", () => {
@@ -45,6 +49,13 @@ export default class MyCanvas extends Component {
 
     //#### passing the setDrawing-function to the parent component ####
     this.props.selectSetDrawingMethod(this.setDrawing);
+  }
+
+  componentDidUpdate() {
+    // console.log('=============');
+    // console.log('CURRENT STATE --- MYCANVAS.JS', this.state);
+    // console.log(this.props.idNumber);
+    // console.log('=============');
   }
 
   componentWillUnmount() {
@@ -92,16 +103,14 @@ export default class MyCanvas extends Component {
     );
   }
 
-  setDrawing() {
+  static setDrawing() {
     const canvasData = this.canvasRef.current.toDataURL("image/png");
-    if (!this.props.identifyer) {
-      this.props.addElementToCanvasBlockArray(canvasData);
-    } else {
-      this.props.setIdentifyerDrawing(canvasData);
-    }
-    this.setState({
-      drawingIsNotSet: false,
-    });
+    return canvasData;
+
+    // this.props.setIdentifyerDrawing(canvasData);
+    // this.setState({
+    //   drawingIsNotSet: false,
+    // });
   }
 
   render() {
@@ -111,8 +120,8 @@ export default class MyCanvas extends Component {
           className={this.state.drawingIsNotSet ? null : 'canvasHasBeenSet'}
           id={"my-canvas" + this.props.idNumber}
           ref={this.canvasRef}
-          height={this.state.canvasHeight}
-          width={this.state.canvasWidth}
+          height={this.props._dimensions.h}
+          width={this.props._dimensions.w}
         />
       </React.Fragment>
     );
