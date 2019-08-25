@@ -10,7 +10,6 @@ export default class CanvasBlock extends Component {
       setterButtonIdName: "canvas-setter",
     };
     this.clearCanvasOnClick = this.clearCanvasOnClick.bind(this);
-    this.setDrawingOnClick = this.setDrawingOnClick.bind(this);
   }
 
   componentWillUnmount() {
