@@ -1,13 +1,11 @@
 import React, { Component } from "react";
 import MyCanvas from "./MyCanvas";
-// import { BasicButton } from './BasicButton';
 
 export default class CanvasBlock extends Component {
   constructor(props) {
     super(props);
     this.state = {
       clearFunction: null,
-      setDrawingFunction: null,
       setIdentifyerDrawing: props.setIdentifyerDrawing,
       setterButtonIdName: "canvas-setter",
     };
@@ -25,12 +23,6 @@ export default class CanvasBlock extends Component {
     });
   }
 
-  setDrawingOnClick(setDrawingFunc) {
-    this.setState({
-      setDrawingFunction: setDrawingFunc
-    });
-  }
-
   render() {
     const props = this.props;
     return (
@@ -44,7 +36,6 @@ export default class CanvasBlock extends Component {
           idNumber={props.idNumber}
           registerCanvasInteractions={props.registerCanvasInteractions}
           selectClearingMethod={this.clearCanvasOnClick}
-          selectSetDrawingMethod={this.setDrawingOnClick}
         />
         <div className="button-container">
           {!props.isIdentifyBlock ?
