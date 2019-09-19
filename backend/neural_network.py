@@ -3,7 +3,7 @@ import random, math, pickle
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Dropout, Activation, Flatten, Conv2D, MaxPooling2D
-from samples import getDatasetAsTuple, getSamplesList, getShapeList
+from samples import getSamplesList, getShapeList
 from support_Functions import getShapeInfo, getMaxSamplesConst
 
 training_data_list = []
@@ -71,9 +71,14 @@ def createTrainingData_Conv():
                   optimizer='adam',
                   metrics=['accuracy'])
 
-    model.fit(X_reshaped, y, batch_size=32, epochs=10, validation_split=0.2)
+    try:
+        model.fit(X_reshaped, y, batch_size=32, epochs=3, validation_split=0.2)
+        model.save(model_name)
+        return True
+    except (RuntimeError, ValueError) as e:
+        print('===> Error occured - neural_network.py', e)
+        return False
 
-    model.save(model_name)
     # new_model = tf.keras.models.load_model('dog_cat_model.h5')
 
 

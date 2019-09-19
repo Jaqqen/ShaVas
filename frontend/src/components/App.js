@@ -1,39 +1,29 @@
 import React, { Component } from "react";
 import "./../static/App.css";
 import CanvasBlock from "./CanvasBlock";
-import MyCanvas from "./MyCanvas";
 
 export default class App extends Component {
   constructor(props) {
     super(props);
-    this.state = {
+    this.initState = {
       canvasNamesWithInteraction: [],
-      disableGenerateButton: false,
       identifyerCanvas: false,
-      identifyerDrawing: null,
-      interactionCounter: 0,
+      isGenerating: false,
       myInterval: null,
-      trainDrawings: [],
     };
+    this.state = { ...this.initState }
     this.fetchIfNeuralNetwork = this.fetchIfNeuralNetwork.bind(this);
-    // this.sendDataToBackend = this.sendDataToBackend.bind(this);
+    this.getSample = this.getSample.bind(this);
     this.registerCanvasInteractions = this.registerCanvasInteractions.bind(this);
-    this.setIdentifyerDrawing = this.setIdentifyerDrawing.bind(this);
+    this.resetInputLogic = this.resetInputLogic.bind(this);
+    this.sendDataToBackend = this.sendDataToBackend.bind(this);
+    this.getRootStateWhenMyCanvasUnmount = this.getRootStateWhenMyCanvasUnmount.bind(this);
+    this.identifyCanvasContent = this.identifyCanvasContent.bind(this);
   }
 
   componentDidMount() {
     this.fetchClearDatalist();
     this.fetchIfNeuralNetwork();
-  }
-
-  componentDidUpdate() {
-    // console.log('=============');
-    // console.log('CURRENT STATE --- APP.JS', this.state);
-    // console.log('=============');
-  }
-
-  componentWillUnmount() {
-    console.log('App has unmounted');
   }
 
   // GET - CLEAR LIST VARIABLES IN BACKEND
@@ -47,9 +37,9 @@ export default class App extends Component {
         }
       })
       .then(data => {
-        for (let i = 0; i < data.length; i++) {
-          console.log('OK', data[i]);
-        }
+        Object.keys(data).forEach(key => {
+          console.log(key + ' ' + data[key]);
+        });
       })
       .catch(error => console.log('Error', error))
   }
@@ -68,7 +58,6 @@ export default class App extends Component {
         console.log('OK - fetchIfNeuralNetwork', data);
         if (data === true) {
           this.setState({
-            disableGenerateButton: false,
             identifyerCanvas: false,
           });
         }
@@ -81,12 +70,11 @@ export default class App extends Component {
     const canvas0 = document.getElementById('my-canvas0').getContext('2d')['canvas'].toDataURL('image/png');
     const canvas1 = document.getElementById('my-canvas1').getContext('2d')['canvas'].toDataURL('image/png');
 
+    this.setState({ isGenerating: true });
 
     const obj = {
       'data0': canvas0,
       'data1': canvas1,
-      'shape0': 'Shape 0',
-      'shape1': 'Shape 1'
     };
 
     await fetch('/send_canvas', {
@@ -100,42 +88,20 @@ export default class App extends Component {
         if (response.ok) {
           return response.json();
         } else {
-          throw new Error('Something went wrong ...');
+          throw new Error('Something went wrong in /send_canvas...');
         }
       })
       .then(data => {
-        console.log('OK', data);
-        this.setState({
-          disableGenerateButton: true,
-        });
-        // this.getSample();
-        this.generate();
-      })
-      .catch(error => console.log('ERROR', error));
-
-  }
-
-  // GET - GENERATE MORE DATA AND RECEIVE CONFIRMATION THAT SAMPLES
-  // HAVE BEEN CREATED
-  async generate() {
-    await fetch('/generate')
-      .then(response => {
-        if (response.ok) {
-          return response.json();
-        } else {
-          throw new Error('Something went wrong ...');
-        }
-      })
-      .then(data => {
-        console.log('OK', data);
+        console.log('OK - /send_canvas \n', data);
         const myInterval = setInterval(() => {
           this.getSample();
-        }, 10000)
+        }, 1000)
         this.setState({
           myInterval: myInterval
         });
       })
-      .catch(error => console.log('ERROR', error))
+      .catch(error => console.log('ERROR - Catch: /send_canvas ', error));
+
   }
 
   // GET - SAMPLE OF THE DATA THAT IS BEING GENERATED
@@ -145,17 +111,17 @@ export default class App extends Component {
         if (response.ok) {
           return response.json();
         } else {
-          throw new Error('Something went wrong ...');
+          throw new Error('Something went wrong in /getSample...');
         }
       })
       .then(data => {
-        if (!data[0].samples_created) {
-          console.log('OK - FALSE: ', data);
-
+        if (!data.samples_created) {
+          console.log('OK - FALSE - /getSample: ', data);
         } else {
-          console.log('OK - TRUE: ', data);
+          console.log('OK - TRUE - /getSample: ', data);
           this.setState({
             identifyerCanvas: true,
+            isGenerating: false,
           });
           clearInterval(this.state.myInterval);
         }
@@ -165,8 +131,10 @@ export default class App extends Component {
 
   // POST - IDENTIFY THE DRAWING
   async identifyCanvasContent() {
+    const identificationCanvas = document
+      .getElementById('my-canvas2').getContext('2d')['canvas'].toDataURL('image/png');
 
-    const obj = { 'dataI': this.state.identifyerDrawing }
+    const obj = { 'dataI': identificationCanvas }
 
     await fetch('/identify', {
       method: 'POST',
@@ -183,16 +151,13 @@ export default class App extends Component {
         }
       })
       .then(data => {
-        console.log(data);
-        console.log('IDENTIFIED')
+        try {
+          console.log('>> IDENTIFIED - 0-0 ', data[0][0]);
+        } catch (e) {
+          console.log('<< NOT IDENTIFED - 0');
+        }
       })
       .catch(error => console.log('ERROR', error))
-  }
-
-  setIdentifyerDrawing(drawing) {
-    this.setState({
-      identifyerDrawing: drawing,
-    }, () => this.identifyCanvasContent());
   }
 
   registerCanvasInteractions(canvasName) {
@@ -210,9 +175,18 @@ export default class App extends Component {
     }
   }
 
+  resetInputLogic() {
+    this.setState({ ...this.initState })
+  }
+
+  getRootStateWhenMyCanvasUnmount() {
+    console.log(this.state);
+  }
+
   render() {
-    const { trainDrawings, identifyerCanvas } = this.state;
     const dimensions = { h: 300, w: 400 };
+
+    const { identifyerCanvas, isGenerating } = this.state;
 
     return (
       <div>
@@ -222,28 +196,52 @@ export default class App extends Component {
           <div className="App">
             <CanvasBlock
               canvasDimensions={dimensions}
+              constructionCompleted={identifyerCanvas}
               idNumber={0}
+              isGenerating={isGenerating}
               isIdentifyBlock={false}
               registerCanvasInteractions={this.registerCanvasInteractions}
+              resetInputLogic={this.resetInputLogic}
 
             />
             <CanvasBlock
               canvasDimensions={dimensions}
+              constructionCompleted={identifyerCanvas}
               idNumber={1}
+              isGenerating={isGenerating}
               isIdentifyBlock={false}
               registerCanvasInteractions={this.registerCanvasInteractions}
+              resetInputLogic={this.resetInputLogic}
             />
           </div>
           <div id="generateButton">
-            <button disabled={!this.allCanvasHaveContent()} type='button' onClick={this.sendDataToBackend}>
-              {this.allCanvasHaveContent() ? 'Generate samples' : 'Please draw your shapes!'}
+            <button
+              disabled={!this.allCanvasHaveContent() || identifyerCanvas || isGenerating}
+              type='button'
+              onClick={this.sendDataToBackend}>
+              {this.allCanvasHaveContent() ?
+                isGenerating ?
+                  'Generating samples and Neural Network'
+                  :
+                  identifyerCanvas ?
+                    'Complete'
+                    :
+                    'Generate samples'
+                :
+                'Please draw your shapes!'}
             </button>
           </div>
           <hr />
         </div>
-        {trainDrawings.length > 1 && identifyerCanvas ?
+        {identifyerCanvas ?
           <div id="identifyer-container">
-            <CanvasBlock setIdentifyerDrawing={this.setIdentifyerDrawing} idNumber={2} isIdentifyBlock={true}></CanvasBlock>
+            <CanvasBlock
+              canvasDimensions={dimensions}
+              getRootStateWhenMyCanvasUnmount={this.getRootStateWhenMyCanvasUnmount}
+              idNumber={2}
+              isIdentifyBlock={true}
+              identifyCanvasContent={this.identifyCanvasContent}
+            />
           </div>
           :
           <h2>Please draw in both fields identification.</h2>

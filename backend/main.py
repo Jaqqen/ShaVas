@@ -4,68 +4,73 @@ import tensorflow as tf
 import numpy as np
 import base64, os, time, json
 import support_Functions as supF
-from samples import createSamples, getDatasetAsTuple, getSamplesList
+from samples import createSamples, getSamplesListForJSON, clearBothDataLists
 from neural_network import createTrainingData_Conv, getModelName
 
 app = Flask(__name__)
 
-data_list = []
-shape_list = []
+# temporarily holds holds both canvas-input data
+temp_data_list = []
 
+# holds both images - prepareImageBeforeConversion and convertPixelValues
+# also is used when createMultipleSamples
 image_list = []
 
-random_sample_value = 0
-created_samples = False
-print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
-print('!!!!!!!!!!!!!START MAIN!!!!!!!!!!!!!')
-print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
+# is used to tell the frontend that all samples have been created and the
+# neural network has been build
+samples_and_nn_isDone = False
+
+# path prefix for the images
+IMAGEPATHPREFIX = '../drawnImages/'
+
+print('!!!!!!!!!!!!!!!!!!!!!!!!!!')
+print('!!!!!!!!START MAIN!!!!!!!!')
+print('!!!!!!!!!!!!!!!!!!!!!!!!!!')
 
 
+# Clears Data when starting application or refreshing
 @app.route('/clear_datalist', methods=['GET'])
 def clear_datalist():
-    global random_sample_value
-    print("============================ \n")
-    print("CLEAR_DATALIST \n")
-    print("============================ \n")
-    data_list.clear()
-    shape_list.clear()
-    image_list.clear()
-    random_sample_value = 0
+    global samples_and_nn_isDone
 
-    response_str = ('>>> Cleared datalist amount: ' + str(len(data_list)),
-                    '>>> Cleared shapeList amount: ' + str(len(shape_list)),
-                    '>>> Cleared image_list:  ' + str(len(image_list)))
+    temp_data_list.clear()
+    image_list.clear()
+    samples_and_nn_isDone = False
+
+    response_str = (
+        '>>> Cleared datalist amount: ' + str(len(temp_data_list)),
+        '>>> Cleared image_list: ' + str(len(image_list)),
+        '>>> Cleared samples_and_nn_isDone: ' + str(samples_and_nn_isDone),
+    )
     return jsonify(response_str), 200
 
 
+# takes two base64-strings and saves them as images
+# async action: creates multiple different samples
 @app.route('/send_canvas', methods=['POST'])
 def send_canvas():
-    json_Obj = request.get_json();
+    json_Obj = request.get_json()
 
-    data_list.append(json_Obj['data0'])
-    data_list.append(json_Obj['data1'])
-    shape_list.append(json_Obj['shape0'])
-    shape_list.append(json_Obj['shape1'])
-    print("============================ \n")
-    print("SEND_CANVAS \n")
-    for index, data in enumerate(data_list):
+    temp_data_list.append(json_Obj['data0'])
+    temp_data_list.append(json_Obj['data1'])
+
+    for index, data in enumerate(temp_data_list):
         header, encoded = data.split(",", 1)
         decoded_data = base64.b64decode(encoded)
-        path = '../drawnImages/canvasImage_' + str(index) + '.png'
+        path = IMAGEPATHPREFIX + 'canvasImage_' + str(index) + '.png'
         with open(path, 'wb') as f:
             f.write(decoded_data)
+        # appending the images with converted drawing pixels and resized
         image_list.append(
             supF.convertPixelValues(supF.prepareImageBeforeConversion(path)))
-    print("============================ \n")
-    print("============================ \n")
-    print("!!!!!!!!!GENERATE!!!!!!!!")
+
     Thread(target=createMultipleSamples).start()
-    print("============================ \n")
+
+    return jsonify(
+        'Saved Images and generation of data has started, please wait.'), 200
 
 
-    return jsonify('Saved Images and generation of data has started, please wait.'), 200
-
-
+# checks if a neural network model already exists
 @app.route('/if_neural_network', methods=['GET'])
 def if_neural_network():
     path = './' + getModelName()
@@ -75,33 +80,24 @@ def if_neural_network():
         return jsonify(False), 201
 
 
-@app.route('/generate', methods=['GET'])
-def generate():
-
-    print('========================= \n')
-    print('!!!!!!!!!GENERATE!!!!!!!!')
-    print('========================= \n')
-    Thread(target=createMultipleSamples).start()
-
-    return jsonify('Samples are being created'), 200
-
-
+# gets the current samples list as lists in list for json.dump
 @app.route('/getSample', methods=['GET'])
 def getSample():
+    global samples_and_nn_isDone
 
-    sample, samples_created = buildJsonForGetSample()
+    sample_list = getSamplesListForJSON()
 
-    js = [{"sample": sample.tolist(), "samples_created": samples_created}]
-
+    js = {"sample_list": sample_list, "samples_created": samples_and_nn_isDone}
     return Response(json.dumps(js), mimetype='application/json'), 200
 
 
+# identifies the image
 @app.route('/identify', methods=['POST'])
 def identify():
     data_i = request.get_json()['dataI']
     header, encoded = data_i.split(",", 1)
     decoded_data = base64.b64decode(encoded)
-    path = './drawnImages/identifyerImage.png'
+    path = IMAGEPATHPREFIX + 'identifyerImage.png'
     with open(path, 'wb') as f:
         f.write(decoded_data)
     image = supF.prepareImageBeforeConversion(path)
@@ -109,44 +105,29 @@ def identify():
     image_reshaped = np.array(image).reshape(-1, image.shape[1],
                                              image.shape[0], 1)
     predictions = my_model.predict(image_reshaped)
-    print(predictions)
 
     return Response(json.dumps(predictions.tolist()),
                     mimetype='application/json'), 200
 
 
+# creates samples for first and second shape and returns a boolean
+# to indicate if all samples have been created
 def createMultipleSamples():
 
-    global created_samples
+    global samples_and_nn_isDone
     global image_list
+
+    clearBothDataLists()
 
     for index, image in enumerate(image_list):
         for i in range(0, supF.getMaxSamplesConst()):
             if (index == 0):
-                print('==> SHAPE 0 ---- image_index ' + str(index) +
-                      ' ---- i; ' + str(i) + '<==')
                 createSamples(image, 0.0)
             else:
-                print('==> SHAPE 1 ---- image_index ' + str(index) +
-                      ' ---- i; ' + str(i) + '<==')
                 createSamples(image, 1.0)
 
-            if (index == 1 and i == supF.getMaxSamplesConst() - 1):
-                created_samples = True
-
-    return created_samples
-
-
-def buildJsonForGetSample():
-    global random_sample_value
-    samples_list = getSamplesList()
-    random_sample_value += 60
-    print('========================= \n')
-    print('INDEX', random_sample_value)
-    print('CREATED SAMPLES', created_samples)
-    print('========================= \n')
-
-    return (samples_list[random_sample_value], created_samples)
+    samples_and_nn_isDone = createTrainingData_Conv()
+    return samples_and_nn_isDone
 
 
 if __name__ == '__main__':

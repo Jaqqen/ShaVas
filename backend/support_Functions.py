@@ -1,6 +1,6 @@
 import cv2
 
-MAXSAMPLES = 200
+MAXSAMPLES = 20
 
 PIXELVALUETOCONVERTTO = 100
 
@@ -23,7 +23,7 @@ def checkForAnyValueOfRow(line_as_list, _val):
 
 # converts all values that are lower that pure white (value == 255) to
 # a lower value (value = PIXELVALUETOCONVERTTO) to extinguish between
-# pure Black and the drawing
+# pure black pixels, pure white pixels and the pixels of the drawing
 def convertPixelValues(image_array):
     for r_index, line in enumerate(image_array):
         rowIsWhite = checkAllValuesOfRow(line, 255)
@@ -70,6 +70,10 @@ def getPixelsOfDrawing(image):
     return pixel_holder
 
 
+# First, the image is read in grayscale (imread(_PATH_, 0))
+# Secondly, the shape of the image needs to be detected so that we can downscale the dimensions
+# Thirdly, the newly calculated dimensions are used to resize the image via cv2
+# Finally, the resized image-array is returned
 def prepareImageBeforeConversion(PATHTOIMG):
     canvas_drawing = cv2.imread(PATHTOIMG, 0)
     shape = canvas_drawing.shape

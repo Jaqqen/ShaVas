@@ -472,13 +472,32 @@ def createSamples(image_array, shape):
         pass
 
 
+# returns the list of samples
 def getSamplesList():
     return samples_list
 
 
+# returns a list with lists of converted ndarrays to use them in a json-message
+def getSamplesListForJSON():
+    global samples_list
+
+    json_list = []
+
+    for sample in samples_list:
+        json_list.append(sample.tolist())
+
+    return json_list
+
+
+# returns the list of shapes
 def getShapeList():
     return shape_list
 
 
-def getDatasetAsTuple():
-    return (np.asarray(samples_list), np.asarray(shape_list))
+# clear both lists
+def clearBothDataLists():
+    global samples_list
+    global shape_list
+
+    samples_list.clear()
+    shape_list.clear()

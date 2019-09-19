@@ -6,8 +6,6 @@ export default class CanvasBlock extends Component {
     super(props);
     this.state = {
       clearFunction: null,
-      setIdentifyerDrawing: props.setIdentifyerDrawing,
-      setterButtonIdName: "canvas-setter",
     };
     this.clearCanvasOnClick = this.clearCanvasOnClick.bind(this);
   }
@@ -29,32 +27,35 @@ export default class CanvasBlock extends Component {
         <h2>Shape {props.isIdentifyBlock ? 'to identify' : props.idNumber}</h2>
         <MyCanvas
           _dimensions={props.canvasDimensions}
-          setIdentifyerDrawing={this.state.setIdentifyerDrawing}
-          canvasSetterButtonIdName={this.state.setterButtonIdName}
-          isIdentifyBlock={props.isIdentifyBlock}
+          constructionCompleted={props.constructionCompleted}
+          getRootStateWhenMyCanvasUnmount={props.getRootStateWhenMyCanvasUnmount}
           idNumber={props.idNumber}
+          isGenerating={props.isGenerating}
           registerCanvasInteractions={props.registerCanvasInteractions}
+          resetInputLogic={props.resetInputLogic}
           selectClearingMethod={this.clearCanvasOnClick}
         />
         <div className="button-container">
           {!props.isIdentifyBlock ?
-            <button type={"button"} onClick={this.state.clearFunction}>
-              {"Clear Canvas"}
+            <button
+              disabled={props.isGenerating || props.constructionCompleted}
+              onClick={this.state.clearFunction}
+              type='button'
+            >
+              {'Clear Canvas'}
             </button>
             :
             <React.Fragment>
-              <button type={"button"} onClick={this.state.clearFunction}>
-                {"Clear Canvas"}
+              <button type='button' onClick={this.state.clearFunction}>
+                {'Clear Canvas'}
               </button>
-              <button type={"button"} onClick={props.identifyDrawing}>
-                {"Identify Drawing"}
+              <button type='button' onClick={props.identifyCanvasContent}>
+                {'Identify Drawing'}
               </button>
             </React.Fragment>
           }
         </div>
-
       </div>
-
     );
   }
 }
