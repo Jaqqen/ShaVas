@@ -42,7 +42,7 @@ canvas {
 
 button {
   border-radius: 8px;
-  height: 25px;
+  height: 30px;
   margin: 10px 10px;
   transition: background-color 0.35s ease-in-out;
   width: 100%;
@@ -78,12 +78,9 @@ button:hover {
   -moz-box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.75);
   box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.75);
   font-size: 1em;
-  height: 38px;
-  transition: box-shadow 0.15s ease-in-out;
+  height: auto;
+  padding: 10px;
   width: 300px;
-}
-#generateButton button:hover {
-  transition: box-shadow 0.15s ease-in-out;
 }
 
 @keyframes fadeInOpacity {
