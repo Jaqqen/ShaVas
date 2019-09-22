@@ -10,10 +10,6 @@ export default class CanvasBlock extends Component {
     this.clearCanvasOnClick = this.clearCanvasOnClick.bind(this);
   }
 
-  componentWillUnmount() {
-    console.log('CanvasBlock ' + this.props.idNumber + ' has unmounted');
-  }
-
   clearCanvasOnClick(clearFunc) {
     this.setState({
       clearFunction: clearFunc
@@ -24,36 +20,25 @@ export default class CanvasBlock extends Component {
     const props = this.props;
     return (
       <div className="canvas-block-holder">
-        <h2>Shape {props.isIdentifyBlock ? 'to identify' : props.idNumber}</h2>
+        <h2>Shape {props.shapeNumber}</h2>
         <MyCanvas
           _dimensions={props.canvasDimensions}
-          constructionCompleted={props.constructionCompleted}
-          getRootStateWhenMyCanvasUnmount={props.getRootStateWhenMyCanvasUnmount}
+          neuralNetworkHasBeenBuild={props.neuralNetworkHasBeenBuild}
           idNumber={props.idNumber}
+          _id={props._id}
           isGenerating={props.isGenerating}
           registerCanvasInteractions={props.registerCanvasInteractions}
-          resetInputLogic={props.resetInputLogic}
+          resetInputCanvasLogic={props.resetInputCanvasLogic}
           selectClearingMethod={this.clearCanvasOnClick}
         />
         <div className="button-container">
-          {!props.isIdentifyBlock ?
-            <button
-              disabled={props.isGenerating || props.constructionCompleted}
-              onClick={this.state.clearFunction}
-              type='button'
-            >
-              {'Clear Canvas'}
-            </button>
-            :
-            <React.Fragment>
-              <button type='button' onClick={this.state.clearFunction}>
-                {'Clear Canvas'}
-              </button>
-              <button type='button' onClick={props.identifyCanvasContent}>
-                {'Identify Drawing'}
-              </button>
-            </React.Fragment>
-          }
+          <button
+            disabled={props.isGenerating || props.neuralNetworkHasBeenBuild}
+            onClick={this.state.clearFunction}
+            type='button'
+          >
+            Clear Canvas
+          </button>
         </div>
       </div>
     );
