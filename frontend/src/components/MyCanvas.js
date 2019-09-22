@@ -1,12 +1,13 @@
 
 import React, { Component } from "react";
+// import { shapeIdentification } from "../shared/constants/IDGlobal";
 export default class MyCanvas extends Component {
   constructor(props) {
     super(props);
     this.state = {
       canvasHeight: props._dimensions.h,
       canvasWidth: props._dimensions.w,
-      constructionCompleted: props.constructionCompleted,
+      neuralNetworkHasBeenBuild: props.neuralNetworkHasBeenBuild,
       idNumber: props.idNumber,
       isGenerating: props.isGenerating,
       painting: false,
@@ -19,28 +20,18 @@ export default class MyCanvas extends Component {
   }
 
   static getDerivedStateFromProps(props, state) {
-    if (props.constructionCompleted !== state.constructionCompleted) {
-      state.constructionCompleted = props.constructionCompleted;
-      return props.constructionCompleted;
-    } else {
-      return null;
+    if (props.neuralNetworkHasBeenBuild !== state.neuralNetworkHasBeenBuild) {
+      state.neuralNetworkHasBeenBuild = props.neuralNetworkHasBeenBuild;
+      return props.neuralNetworkHasBeenBuild;
     }
-  }
-
-  componentWillUnmount() {
-    window.removeEventListener('mouseup', this.mouseUpHandler, false);
-    this.canvasRef.current.removeEventListener('mousedown', this.mouseDownHandler, false);
-    this.canvasRef.current.removeEventListener('mousemove', this.mouseMoveHandler, false);
-
-    if (this.state.idNumber === 2) {
-      this.props.getRootStateWhenMyCanvasUnmount();
-    }
+    return null;
   }
 
   componentDidMount() {
     const props = this.props;
-    const ctx = this.canvasRef.current.getContext("2d");
+
     // #### pre setup for drawing ####
+    const ctx = this.canvasRef.current.getContext("2d");
     ctx.lineWidth = 6;
     ctx.lineCap = "round";
     ctx.fillStyle = "white";
@@ -51,6 +42,7 @@ export default class MyCanvas extends Component {
       e => this.mouseDownHandler(props, e, ctx));
 
     // #### when mouse is UP on WINDOW ####
+    // window.addEventListener("mouseup", () => this.mouseUpHandler(ctx));
     window.addEventListener("mouseup", () => this.mouseUpHandler(ctx));
 
     // #### when mouse is MOVING on CANVAS ####
@@ -58,25 +50,25 @@ export default class MyCanvas extends Component {
       e => this.mouseMoveHandler(e, ctx));
 
     // #### passing the clearCanvas-function to the parent component ####
-    this.props.selectClearingMethod(this.clearCanvas);
+    props.selectClearingMethod(this.clearCanvas);
   }
 
   mouseDownHandler(props, e, ctx) {
-    if ((props.registerCanvasInteractions && !this.state.constructionCompleted)) {
-      props.registerCanvasInteractions("Canvas" + this.state.idNumber);
+    if (!this.state.neuralNetworkHasBeenBuild) {
+      props.registerCanvasInteractions(this.props._id);
       this.setState({
         painting: true
       });
       this.draw(e, ctx);
-    } else if (props.registerCanvasInteractions && this.state.constructionCompleted) {
-      const redoConstructionConfirm = window.confirm('Do you want to start over?');
-      if (redoConstructionConfirm) {
-        props.resetInputLogic();
+    } else if (this.state.neuralNetworkHasBeenBuild) {
+      const confirmResetOnInputCanvas = window.confirm('Do you want to start over?');
+      if (confirmResetOnInputCanvas) {
+        props.resetInputCanvasLogic();
         this.setState({
-          constructionCompleted: false,
+          neuralNetworkHasBeenBuild: false,
         });
       }
-    } else if ((props.registerCanvasInteractions === undefined && this.state.constructionCompleted === undefined)) {
+    } else if ((props.registerCanvasInteractions === undefined && this.state.neuralNetworkHasBeenBuild === undefined)) {
       this.setState({
         painting: true
       });
@@ -95,8 +87,15 @@ export default class MyCanvas extends Component {
     this.draw(e, ctx);
   }
 
+  shouldDrawBeExecuted() {
+    if (!this.state.painting || this.props.isGenerating || this.props.neuralNetworkHasBeenBuild) {
+      return true;
+    }
+    return false;
+  }
+
   draw(_event, context) {
-    if (!this.state.painting || this.props.isGenerating || this.props.constructionCompleted) return;
+    if (this.shouldDrawBeExecuted()) return;
     const rect = this.canvasRef.current.getBoundingClientRect();
     context.lineTo(_event.clientX - rect.left, _event.clientY - rect.top);
     context.stroke();
@@ -122,13 +121,15 @@ export default class MyCanvas extends Component {
   }
 
   render() {
+    const props = this.props;
+
     return (
       <React.Fragment>
         <canvas
-          id={"my-canvas" + this.state.idNumber}
+          id={props._id}
           ref={this.canvasRef}
-          height={this.props._dimensions.h}
-          width={this.props._dimensions.w}
+          height={props._dimensions.h}
+          width={props._dimensions.w}
         />
       </React.Fragment>
     );

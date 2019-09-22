@@ -1,13 +1,15 @@
 import React, { Component } from "react";
 import "./../static/App.css";
 import CanvasBlock from "./CanvasBlock";
+import IdentifcationCanvasBlock from "./IdentificationBlock";
+import { shapeOneId, shapeTwoId, shapeIdentificationId, identifyerContainerId, generateButtonId } from "../shared/constants/IDGlobal";
 
 export default class App extends Component {
   constructor(props) {
     super(props);
     this.initState = {
       canvasNamesWithInteraction: [],
-      identifyerCanvas: false,
+      neuralNetworkHasBeenBuild: false,
       isGenerating: false,
       myInterval: null,
     };
@@ -15,9 +17,8 @@ export default class App extends Component {
     this.fetchIfNeuralNetwork = this.fetchIfNeuralNetwork.bind(this);
     this.getSample = this.getSample.bind(this);
     this.registerCanvasInteractions = this.registerCanvasInteractions.bind(this);
-    this.resetInputLogic = this.resetInputLogic.bind(this);
+    this.resetInputCanvasLogic = this.resetInputCanvasLogic.bind(this);
     this.sendDataToBackend = this.sendDataToBackend.bind(this);
-    this.getRootStateWhenMyCanvasUnmount = this.getRootStateWhenMyCanvasUnmount.bind(this);
     this.identifyCanvasContent = this.identifyCanvasContent.bind(this);
   }
 
@@ -58,7 +59,7 @@ export default class App extends Component {
         console.log('OK - fetchIfNeuralNetwork', data);
         if (data === true) {
           this.setState({
-            identifyerCanvas: false,
+            neuralNetworkHasBeenBuild: false,
           });
         }
       })
@@ -67,8 +68,8 @@ export default class App extends Component {
 
   // POST - DATA TO BACKEND
   async sendDataToBackend() {
-    const canvas0 = document.getElementById('my-canvas0').getContext('2d')['canvas'].toDataURL('image/png');
-    const canvas1 = document.getElementById('my-canvas1').getContext('2d')['canvas'].toDataURL('image/png');
+    const canvas0 = document.getElementById(shapeOneId).getContext('2d')['canvas'].toDataURL('image/png');
+    const canvas1 = document.getElementById(shapeTwoId).getContext('2d')['canvas'].toDataURL('image/png');
 
     this.setState({ isGenerating: true });
 
@@ -120,7 +121,7 @@ export default class App extends Component {
         } else {
           console.log('OK - TRUE - /getSample: ', data);
           this.setState({
-            identifyerCanvas: true,
+            neuralNetworkHasBeenBuild: true,
             isGenerating: false,
           });
           clearInterval(this.state.myInterval);
@@ -132,7 +133,7 @@ export default class App extends Component {
   // POST - IDENTIFY THE DRAWING
   async identifyCanvasContent() {
     const identificationCanvas = document
-      .getElementById('my-canvas2').getContext('2d')['canvas'].toDataURL('image/png');
+      .getElementById(shapeIdentificationId).getContext('2d')['canvas'].toDataURL('image/png');
 
     const obj = { 'dataI': identificationCanvas }
 
@@ -168,25 +169,30 @@ export default class App extends Component {
 
   allCanvasHaveContent() {
     const { canvasNamesWithInteraction } = this.state;
-    if (canvasNamesWithInteraction.includes('Canvas0') && canvasNamesWithInteraction.includes('Canvas1')) {
+    if (canvasNamesWithInteraction.includes(shapeOneId) && canvasNamesWithInteraction.includes(shapeTwoId)) {
       return true;
-    } else {
-      return false;
     }
+    return false;
   }
 
-  resetInputLogic() {
+  async resetInputCanvasLogic() {
     this.setState({ ...this.initState })
+
+    this.fetchClearDatalist();
   }
 
-  getRootStateWhenMyCanvasUnmount() {
-    console.log(this.state);
+  disableGenerateButton() {
+    const { neuralNetworkHasBeenBuild, isGenerating } = this.state;
+    if (!this.allCanvasHaveContent() || neuralNetworkHasBeenBuild || isGenerating) {
+      return true
+    }
+    return false;
   }
 
   render() {
     const dimensions = { h: 300, w: 400 };
 
-    const { identifyerCanvas, isGenerating } = this.state;
+    const { neuralNetworkHasBeenBuild, isGenerating } = this.state;
 
     return (
       <div>
@@ -196,34 +202,33 @@ export default class App extends Component {
           <div className="App">
             <CanvasBlock
               canvasDimensions={dimensions}
-              constructionCompleted={identifyerCanvas}
-              idNumber={0}
+              neuralNetworkHasBeenBuild={neuralNetworkHasBeenBuild}
+              shapeNumber={0}
+              _id={shapeOneId}
               isGenerating={isGenerating}
-              isIdentifyBlock={false}
               registerCanvasInteractions={this.registerCanvasInteractions}
-              resetInputLogic={this.resetInputLogic}
-
+              resetInputCanvasLogic={this.resetInputCanvasLogic}
             />
             <CanvasBlock
               canvasDimensions={dimensions}
-              constructionCompleted={identifyerCanvas}
-              idNumber={1}
+              neuralNetworkHasBeenBuild={neuralNetworkHasBeenBuild}
+              shapeNumber={1}
+              _id={shapeTwoId}
               isGenerating={isGenerating}
-              isIdentifyBlock={false}
               registerCanvasInteractions={this.registerCanvasInteractions}
-              resetInputLogic={this.resetInputLogic}
+              resetInputCanvasLogic={this.resetInputCanvasLogic}
             />
           </div>
-          <div id="generateButton">
+          <div id={generateButtonId}>
             <button
-              disabled={!this.allCanvasHaveContent() || identifyerCanvas || isGenerating}
+              disabled={this.disableGenerateButton()}
               type='button'
               onClick={this.sendDataToBackend}>
               {this.allCanvasHaveContent() ?
                 isGenerating ?
                   'Generating samples and Neural Network'
                   :
-                  identifyerCanvas ?
+                  neuralNetworkHasBeenBuild ?
                     'Complete'
                     :
                     'Generate samples'
@@ -233,13 +238,11 @@ export default class App extends Component {
           </div>
           <hr />
         </div>
-        {identifyerCanvas ?
-          <div id="identifyer-container">
-            <CanvasBlock
+        {neuralNetworkHasBeenBuild ?
+          <div id={identifyerContainerId}>
+            <IdentifcationCanvasBlock
               canvasDimensions={dimensions}
-              getRootStateWhenMyCanvasUnmount={this.getRootStateWhenMyCanvasUnmount}
-              idNumber={2}
-              isIdentifyBlock={true}
+              _id={shapeIdentificationId}
               identifyCanvasContent={this.identifyCanvasContent}
             />
           </div>
