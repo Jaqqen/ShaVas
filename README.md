@@ -1,6 +1,6 @@
 # ShaVas #
 
-ShaVas ist eine Web-Application mit der man zwei, frei gewählte Formen zum Erkennen einzeichnen und mithilfe eines speziellen Feldes diese erkennen lassen kann.
+ShaVas ist eine Web-Applikation mit der man zwei, frei gewählte Formen zum Erkennen einzeichnen und mithilfe eines speziellen Feldes diese erkennen lassen kann.
 
 
 ## Vorbereitung und Installation ## 
@@ -88,7 +88,7 @@ Als erstes müssen Sie das Repository klonen oder downloaden.
       ```
       exit()
       ```
-      ausführen.
+      eingeben.
 
 **3. Frontend starten**
 ----
@@ -96,8 +96,8 @@ Als erstes müssen Sie das Repository klonen oder downloaden.
   ```
   npm start
   ```
-  Dadurch sollte sich ein Fenster im Browser öffnen, wo dann die Applikation läuft.
-  * Falls sich kein Fenster öffnet, dies in die Adressezeile eintragen:
+  Dadurch sollte sich ein Fenster im Browser öffnen, worin die Applikation läuft.
+  * Falls sich kein Fenster öffnet, dann dies in die Adressezeile ihres gewünschten Browsers eintragen:
     ```
     localhost:3000
     ```
