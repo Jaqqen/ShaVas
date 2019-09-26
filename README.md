@@ -73,13 +73,13 @@ Als erstes müssen Sie das Repository klonen oder downloaden.
       pip3 list --local
       ```
   6. Ist das backend aktiviert und Sie möchten es abschalten bzw. die virtuelle Umgebung schließen, so müssen Sie das backend mit
-      ```
+  
       <kbd>⌃</kbd>+<kbd>C</kbd>
-      ```
+      
       oder
-      ```
+      
       <kbd>Strg</kbd>+<kbd>C</kbd>
-      ```
+      
       deaktivieren und danach
       ```
       exit
@@ -121,13 +121,13 @@ Als erstes müssen Sie das Repository klonen oder downloaden.
     ...
     ```
     Das Frontend ist somit einsatzbereit. Um es also wieder abzuschalten, muss einfach nur
-    ```
-    ^+C
-    ```
+    
+    <kbd>⌃</kbd>+<kbd>C</kbd>
+    
     oder
-    ```
-    Strg+C
-    ```
+    
+    <kbd>Strg</kbd>+<kbd>C</kbd>
+    
     in der Konsole gedrückt werden.
 
 
