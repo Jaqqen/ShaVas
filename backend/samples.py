@@ -298,7 +298,7 @@ def getRotationOfImage(image_array):
 
     cols, rows = getShapeInfo(image_array)
 
-    scale = round(random.uniform(0.5, 1.0), 2)
+    scale = 1
     list_corners = getCornersOfDrawingFrame(
         getCalcOfMaxMinValuesOfPixelHolder(image_array))
     copy_corners = copy.copy(list_corners)
@@ -336,8 +336,33 @@ def getRotationOfImage(image_array):
     return dst_transformation
 
 
+def getScaleOfImage(image_array):
+    print('===> SCALE <===')
+
+    cols, rows = getShapeInfo(image_array)
+
+    scale = round(random.uniform(0.65, 0.95), 2)
+    list_corners = getCornersOfDrawingFrame(
+        getCalcOfMaxMinValuesOfPixelHolder(image_array))
+
+    div_x = round(random.uniform(1.75, 2.25), 3)
+    div_y = round(random.uniform(1.75, 2.25), 3)
+
+    x_center = list_corners[0][0] + math.floor(
+        (list_corners[1][0] - list_corners[0][0]) / div_x)
+    y_center = list_corners[0][1] + math.floor(
+        (list_corners[2][1] - list_corners[0][1]) / div_y)
+
+    M_transformation = cv2.getRotationMatrix2D((x_center, y_center), 0, scale)
+    dst_transformation = cv2.warpAffine(image_array, M_transformation,
+                                        (cols, rows))
+    convertPixelsToWhite(dst_transformation)
+
+    return dst_transformation
+
+
 def createSamples(image_array, shape):
-    transformation_options = random.randint(0, 6)
+    transformation_options = random.randint(0, 13)
 
     ###############
     # translation #
@@ -351,16 +376,22 @@ def createSamples(image_array, shape):
     elif (transformation_options == 1):
         result_image_array = getRotationOfImage(image_array)
 
+    ###########
+    # scaling #
+    ###########
+    elif (transformation_options == 2):
+        result_image_array = getScaleOfImage(image_array)
+
     ##############################
     # perspective transformation #
     ##############################
-    elif (transformation_options == 2):
+    elif (transformation_options == 3):
         result_image_array = getPerspectiveTransformationOfImage(image_array)
 
     ##########################
     # translation + rotation #
     ##########################
-    elif (transformation_options == 3):
+    elif (transformation_options == 4):
         trans_rot_options = random.randint(0, 1)
 
         # 1st trans, 2nd rot
@@ -371,10 +402,24 @@ def createSamples(image_array, shape):
         else:
             rot_dst = getRotationOfImage(image_array)
             result_image_array = getTranslationOfImage(rot_dst)
+    ##########################
+    # translation + scaling #
+    ##########################
+    elif (transformation_options == 5):
+        trans_scale_options = random.randint(0, 1)
+
+        # 1st trans, 2nd scale
+        if (trans_scale_options == 0):
+            trans_dst = getTranslationOfImage(image_array)
+            result_image_array = getScaleOfImage(trans_dst)
+        # 1st scale, 2nd trans
+        else:
+            scale_dst = getScaleOfImage(image_array)
+            result_image_array = getTranslationOfImage(scale_dst)
     ############################################
     # translation + perspective transformation #
     ############################################
-    elif (transformation_options == 4):
+    elif (transformation_options == 6):
         transl_pTransf_options = random.randint(0, 1)
 
         # 1st transl, 2nd pTransf
@@ -389,7 +434,7 @@ def createSamples(image_array, shape):
     #########################################
     # rotation + perspective transformation #
     #########################################
-    elif (transformation_options == 5):
+    elif (transformation_options == 7):
         rot_pTransf_options = random.randint(0, 1)
 
         # 1st rot, 2nd pTransf
@@ -400,10 +445,38 @@ def createSamples(image_array, shape):
         else:
             pTransf_dst = getPerspectiveTransformationOfImage(image_array)
             result_image_array = getRotationOfImage(pTransf_dst)
+    #########################################
+    # rotation + scaling #
+    #########################################
+    elif (transformation_options == 8):
+        rot_scale_options = random.randint(0, 1)
+
+        # 1st rot, 2nd scale
+        if (rot_scale_options == 0):
+            rot_dst = getRotationOfImage(image_array)
+            result_image_array = getScaleOfImage(rot_dst)
+        # 1st scale, 2nd rot
+        else:
+            scale_dst = getScaleOfImage(image_array)
+            result_image_array = getRotationOfImage(scale_dst)
+    #########################################
+    # scaling + perspective transformation #
+    #########################################
+    elif (transformation_options == 9):
+        scale_pTransf_options = random.randint(0, 1)
+
+        # 1st scale, 2nd pTransf
+        if (scale_pTransf_options == 0):
+            scale_dst = getScaleOfImage(image_array)
+            result_image_array = getPerspectiveTransformationOfImage(scale_dst)
+        # 1st pTransf, 2nd scale
+        else:
+            pTransf_dst = getPerspectiveTransformationOfImage(image_array)
+            result_image_array = getScaleOfImage(pTransf_dst)
     #######################################################
     # translation + rotation + perspective transformation #
     #######################################################
-    elif (transformation_options == 6):
+    elif (transformation_options == 10):
         transl_rot_pTransf_options = random.randint(0, 5)
 
         # 1st transl, 2nd rot, 3rd pTransf
@@ -463,6 +536,201 @@ def createSamples(image_array, shape):
             except Exception as e:
                 print(e)
                 pass
+    ######################################################
+    # translation + scaling + perspective transformation #
+    ######################################################
+    elif (transformation_options == 11):
+        transl_scale_pTransf_options = random.randint(0, 5)
+
+        # 1st transl, 2nd scale, 3rd pTransf
+        if (transl_scale_pTransf_options == 0):
+            try:
+                transl_dst = getTranslationOfImage(image_array)
+                transl_scale_dst = getScaleOfImage(transl_dst)
+                result_image_array = getPerspectiveTransformationOfImage(
+                    transl_scale_dst)
+            except Exception as e:
+                print(e)
+                pass
+        # 1st transl, 2nd pTransf, 3rd scale
+        elif (transl_scale_pTransf_options == 1):
+            try:
+                transl_dst = getTranslationOfImage(image_array)
+                transl_pTransf_dst = getPerspectiveTransformationOfImage(
+                    transl_dst)
+                result_image_array = getScaleOfImage(transl_pTransf_dst)
+            except Exception as e:
+                print(e)
+                pass
+        # 1st scale, 2nd transl, 3rd pTransf
+        elif (transl_scale_pTransf_options == 2):
+            try:
+                scale_dst = getScaleOfImage(image_array)
+                scale_transl_dst = getTranslationOfImage(scale_dst)
+                result_image_array = getPerspectiveTransformationOfImage(
+                    scale_transl_dst)
+            except Exception as e:
+                print(e)
+                pass
+        # 1st scale, 2nd pTransf, 3rd transl
+        elif (transl_scale_pTransf_options == 3):
+            try:
+                scale_dst = getScaleOfImage(image_array)
+                scale_pTransf_dst = getPerspectiveTransformationOfImage(
+                    scale_dst)
+                result_image_array = getTranslationOfImage(scale_pTransf_dst)
+            except Exception as e:
+                print(e)
+                pass
+        # 1st pTransf, 2nd transl, 3rd scale
+        elif (transl_scale_pTransf_options == 4):
+            try:
+                pTransf_dst = getPerspectiveTransformationOfImage(image_array)
+                pTransf_transl_dst = getTranslationOfImage(pTransf_dst)
+                result_image_array = getScaleOfImage(pTransf_transl_dst)
+            except Exception as e:
+                print(e)
+                pass
+        # 1st pTransf, 2nd scale, 3rd transl
+        else:
+            try:
+                pTransf_dst = getPerspectiveTransformationOfImage(image_array)
+                pTransf_scale_dst = getScaleOfImage(pTransf_dst)
+                result_image_array = getTranslationOfImage(pTransf_scale_dst)
+            except Exception as e:
+                print(e)
+                pass
+    ###################################################
+    # scaling + rotation + perspective transformation #
+    ###################################################
+    elif (transformation_options == 12):
+        scale_rot_pTransf_options = random.randint(0, 5)
+
+        # 1st scale, 2nd rot, 3rd pTransf
+        if (scale_rot_pTransf_options == 0):
+            try:
+                scale_dst = getScaleOfImage(image_array)
+                scale_rot_dst = getRotationOfImage(scale_dst)
+                result_image_array = getPerspectiveTransformationOfImage(
+                    scale_rot_dst)
+            except Exception as e:
+                print(e)
+                pass
+        # 1st scale, 2nd pTransf, 3rd rot
+        elif (scale_rot_pTransf_options == 1):
+            try:
+                scale_dst = getScaleOfImage(image_array)
+                scale_pTransf_dst = getPerspectiveTransformationOfImage(
+                    scale_dst)
+                result_image_array = getRotationOfImage(scale_pTransf_dst)
+            except Exception as e:
+                print(e)
+                pass
+        # 1st rot, 2nd scale, 3rd pTransf
+        elif (scale_rot_pTransf_options == 2):
+            try:
+                rot_dst = getRotationOfImage(image_array)
+                rot_scale_dst = getScaleOfImage(rot_dst)
+                result_image_array = getPerspectiveTransformationOfImage(
+                    rot_scale_dst)
+            except Exception as e:
+                print(e)
+                pass
+        # 1st rot, 2nd pTransf, 3rd scale
+        elif (scale_rot_pTransf_options == 3):
+            try:
+                rot_dst = getRotationOfImage(image_array)
+                rot_pTransf_dst = getPerspectiveTransformationOfImage(rot_dst)
+                result_image_array = getScaleOfImage(rot_pTransf_dst)
+            except Exception as e:
+                print(e)
+                pass
+        # 1st pTransf, 2nd scale, 3rd rot
+        elif (scale_rot_pTransf_options == 4):
+            try:
+                pTransf_dst = getPerspectiveTransformationOfImage(image_array)
+                pTransf_scale_dst = getScaleOfImage(pTransf_dst)
+                result_image_array = getRotationOfImage(pTransf_scale_dst)
+            except Exception as e:
+                print(e)
+                pass
+        # 1st pTransf, 2nd rot, 3rd scale
+        else:
+            try:
+                pTransf_dst = getPerspectiveTransformationOfImage(image_array)
+                pTransf_rot_dst = getRotationOfImage(pTransf_dst)
+                result_image_array = getScaleOfImage(pTransf_rot_dst)
+            except Exception as e:
+                print(e)
+                pass
+    ####################################
+    # translation + rotation + scaling #
+    ####################################
+    elif (transformation_options == 13):
+        transl_rot_scale_options = random.randint(0, 5)
+
+        # 1st transl, 2nd rot, 3rd scale
+        if (transl_rot_scale_options == 0):
+            try:
+                transl_dst = getTranslationOfImage(image_array)
+                transl_rot_dst = getRotationOfImage(transl_dst)
+                result_image_array = getScaleOfImage(transl_rot_dst)
+            except Exception as e:
+                print(e)
+                pass
+        # 1st transl, 2nd scale, 3rd rot
+        elif (transl_rot_scale_options == 1):
+            try:
+                transl_dst = getTranslationOfImage(image_array)
+                transl_scale_dst = getScaleOfImage(transl_dst)
+                result_image_array = getRotationOfImage(transl_scale_dst)
+            except Exception as e:
+                print(e)
+                pass
+        # 1st rot, 2nd transl, 3rd scale
+        elif (transl_rot_scale_options == 2):
+            try:
+                rot_dst = getRotationOfImage(image_array)
+                rot_transl_dst = getTranslationOfImage(rot_dst)
+                result_image_array = getScaleOfImage(rot_transl_dst)
+            except Exception as e:
+                print(e)
+                pass
+        # 1st rot, 2nd scale, 3rd transl
+        elif (transl_rot_scale_options == 3):
+            try:
+                rot_dst = getRotationOfImage(image_array)
+                rot_scale_dst = getScaleOfImage(rot_dst)
+                result_image_array = getTranslationOfImage(rot_scale_dst)
+            except Exception as e:
+                print(e)
+                pass
+        # 1st scale, 2nd transl, 3rd rot
+        elif (transl_rot_scale_options == 4):
+            try:
+                scale_dst = getScaleOfImage(image_array)
+                scale_transl_dst = getTranslationOfImage(scale_dst)
+                result_image_array = getRotationOfImage(scale_transl_dst)
+            except Exception as e:
+                print(e)
+                pass
+        # 1st scale, 2nd rot, 3rd transl
+        else:
+            try:
+                scale_dst = getScaleOfImage(image_array)
+                scale_rot_dst = getRotationOfImage(scale_dst)
+                result_image_array = getTranslationOfImage(scale_rot_dst)
+            except Exception as e:
+                print(e)
+                pass
+    #################################################################
+    # translation + rotation + perspective transformation + scaling #
+    #################################################################
+    # elif (transformation_options == 14):
+    #     ---- Hier müssten 24 Optionen entstehen, damit man alle Faelle
+    #     ---- abdeckt, weswegen dies erst einmal ausgelassen wird.
+    #     scale_rot_pTransf_options = random.randint(0, 23)
+
     try:
         samples_list.append(result_image_array)
         shape_list.append(shape)

@@ -5,7 +5,7 @@ import numpy as np
 import base64, os, time, json
 import support_Functions as supF
 from samples import createSamples, getSamplesListForJSON, clearBothDataLists
-from neural_network import createTrainingData_Conv, getModelName
+from neural_network import create_training_data_conv, getModelName
 
 app = Flask(__name__)
 
@@ -102,8 +102,8 @@ def identify():
         f.write(decoded_data)
     image = supF.prepareImageBeforeConversion(path)
     my_model = tf.keras.models.load_model('./shape_canvas_model.h5')
-    image_reshaped = np.array(image).reshape(-1, image.shape[1],
-                                             image.shape[0], 1)
+    image_reshaped = np.array(image).reshape(-1, image.shape[0],
+                                             image.shape[1], 1)
     predictions = my_model.predict(image_reshaped)
 
     return Response(json.dumps(predictions.tolist()),
@@ -121,12 +121,13 @@ def createMultipleSamples():
 
     for index, image in enumerate(image_list):
         for i in range(0, supF.getMaxSamplesConst()):
+            print('<------------ :', i)
             if (index == 0):
                 createSamples(image, 0.0)
             else:
                 createSamples(image, 1.0)
 
-    samples_and_nn_isDone = createTrainingData_Conv()
+    samples_and_nn_isDone = create_training_data_conv()
     return samples_and_nn_isDone
 
 

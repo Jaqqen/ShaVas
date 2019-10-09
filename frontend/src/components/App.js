@@ -12,6 +12,7 @@ export default class App extends Component {
       neuralNetworkHasBeenBuild: false,
       isGenerating: false,
       myInterval: null,
+      doesProbabilitiesExist: false,
     };
     this.state = { ...this.initState }
     this.fetchIfNeuralNetwork = this.fetchIfNeuralNetwork.bind(this);
@@ -153,9 +154,12 @@ export default class App extends Component {
       })
       .then(data => {
         try {
-          console.log('>> IDENTIFIED - 0-0 ', data[0][0]);
+          this.setState({
+            doesProbabilitiesExist: true,
+          })
+          console.log('>> IDENTIFIED', data);
         } catch (e) {
-          console.log('<< NOT IDENTIFED - 0');
+          console.log('<< NOT IDENTIFED', e);
         }
       })
       .catch(error => console.log('ERROR', error))
@@ -192,7 +196,7 @@ export default class App extends Component {
   render() {
     const dimensions = { h: 300, w: 400 };
 
-    const { neuralNetworkHasBeenBuild, isGenerating } = this.state;
+    const { neuralNetworkHasBeenBuild, isGenerating, doesProbabilitiesExist } = this.state;
 
     return (
       <div>
@@ -241,8 +245,9 @@ export default class App extends Component {
         {neuralNetworkHasBeenBuild ?
           <div id={identifyerContainerId}>
             <IdentifcationCanvasBlock
-              canvasDimensions={dimensions}
               _id={shapeIdentificationId}
+              canvasDimensions={dimensions}
+              doesProbabilitiesExist={doesProbabilitiesExist}
               identifyCanvasContent={this.identifyCanvasContent}
             />
           </div>

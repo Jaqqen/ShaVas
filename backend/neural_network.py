@@ -1,8 +1,8 @@
+import random
+import pickle
 import numpy as np
-import random, math, pickle
-import tensorflow as tf
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Dropout, Activation, Flatten, Conv2D, MaxPooling2D
+from tensorflow.keras.layers import Dense, Activation, Flatten, Conv2D, MaxPooling2D
 from samples import getSamplesList, getShapeList
 from support_Functions import getShapeInfo, getMaxSamplesConst
 
@@ -10,7 +10,7 @@ training_data_list = []
 model_name = 'shape_canvas_model.h5'
 
 
-def createTrainingData_Conv():
+def create_training_data_conv():
     samples_list = getSamplesList()
     shape_list = getShapeList()
 
@@ -30,7 +30,7 @@ def createTrainingData_Conv():
         X.append(features)
         y.append(labels)
 
-    X_reshaped = np.array(X).reshape(-1, X_new_shape[0], X_new_shape[1], 1)
+    X_reshaped = np.array(X).reshape(-1, X_new_shape[1], X_new_shape[0], 1)
 
     X_reshaped = X_reshaped / 255.0
 
@@ -72,7 +72,7 @@ def createTrainingData_Conv():
                   metrics=['accuracy'])
 
     try:
-        model.fit(X_reshaped, y, batch_size=32, epochs=3, validation_split=0.2)
+        model.fit(X_reshaped, y, batch_size=32, epochs=6, validation_split=0.2)
         model.save(model_name)
         return True
     except (RuntimeError, ValueError) as e:
