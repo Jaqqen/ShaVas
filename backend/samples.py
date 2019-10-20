@@ -3,6 +3,7 @@ import numpy as np
 import copy, random, math, cv2
 
 samples_list = []
+frontend_samples_list = []
 shape_list = []
 
 
@@ -95,19 +96,19 @@ def getPerspectiveTransformationOfImage(image_array):
 
     ####===> stretch/compress top and bottom <===####
     if (trans_m_options == 0):
-        print('====> stretch top and bottom <====')
+        # print('====> stretch top and bottom <====')
         vertical_add_options = random.randint(0, 2)
 
         # stretch/compress ONE corner - top
         if (vertical_add_options == 0):
-            print('=====> stretch/compress ONE corner - top <=====')
+            # print('=====> stretch/compress ONE corner - top <=====')
             corner_index = random.randint(0, 1)
             corners_of_dst[corner_index][1] = corners_of_dst[
                 corner_index][1] + (random.randint(1, 5) if random.randint(
                     0, 1) == 0 else random.randint(1, 5) * -1)
         # stretch/compress ONE corner - bottom
         elif (vertical_add_options == 1):
-            print('=====> stretch/compress ONE corner - bottom <=====')
+            # print('=====> stretch/compress ONE corner - bottom <=====')
             corner_index = random.randint(2, 3)
             corners_of_dst[corner_index][1] = corners_of_dst[
                 corner_index][1] + (random.randint(1, 5) if random.randint(
@@ -118,9 +119,7 @@ def getPerspectiveTransformationOfImage(image_array):
                                            [2, 3, 'equal']])
             # UNEQUAL top
             if (top_or_bottom == [0, 1]):
-                print(
-                    '=====> stretch/compress BOTH corners - UNEQUAL top <====='
-                )
+                # print('=====> stretch/compress BOTH corners - UNEQUAL top <=====')
 
                 corners_of_dst[top_or_bottom[0]][1] = corners_of_dst[
                     top_or_bottom[0]][1] + (random.randint(1, 5) if
@@ -132,9 +131,7 @@ def getPerspectiveTransformationOfImage(image_array):
                                             random.randint(1, 5) * -1)
             # UNEQUAL bottom
             elif (top_or_bottom == [2, 3]):
-                print(
-                    '=====> stretch/compress BOTH corners - UNEQUAL bottom <====='
-                )
+                # print('=====> stretch/compress BOTH corners - UNEQUAL bottom <=====')
 
                 corners_of_dst[top_or_bottom[0]][1] = corners_of_dst[
                     top_or_bottom[0]][1] + (random.randint(1, 5) if
@@ -146,8 +143,7 @@ def getPerspectiveTransformationOfImage(image_array):
                                             random.randint(1, 5) * -1)
             # EQUAL top
             elif (top_or_bottom == [0, 1, 'equal']):
-                print(
-                    '=====> stretch/compress BOTH corners - EQUAL top <=====')
+                # print('=====> stretch/compress BOTH corners - EQUAL top <=====')
 
                 equal_stretch_compress = random.randint(1, 5) if (
                     random.randint(0, 1) == 0) else random.randint(1, 5) * -1
@@ -157,9 +153,7 @@ def getPerspectiveTransformationOfImage(image_array):
                     top_or_bottom[1]][1] + equal_stretch_compress
             # EQUAL bottom
             else:
-                print(
-                    '=====> stretch/compress BOTH corners - EQUAL bottom <====='
-                )
+                # print('=====> stretch/compress BOTH corners - EQUAL bottom <=====')
 
                 equal_stretch_compress = random.randint(1, 5) if (
                     random.randint(0, 1) == 0) else random.randint(1, 5) * -1
@@ -170,13 +164,13 @@ def getPerspectiveTransformationOfImage(image_array):
 
     ####===> stretch to right and left <===####
     elif (trans_m_options == 1):
-        print('====> stretch to right and left <====')
+        # print('====> stretch to right and left <====')
 
         horizontal_add_options = random.randint(0, 2)
 
         # stretch/compress ONE corner - left
         if (horizontal_add_options == 0):
-            print('=====> stretch/compress ONE corner - left <=====')
+            # print('=====> stretch/compress ONE corner - left <=====')
             corner_index = 0 if random.randint(0, 1) == 0 else 2
             corners_of_dst[corner_index][
                 0] = corners_of_dst[corner_index][0] + (
@@ -184,7 +178,7 @@ def getPerspectiveTransformationOfImage(image_array):
                     (random.randint(0, 1) == 0) else random.randint(1, 5) * -1)
         # stretch/compress ONE corner - right
         elif (horizontal_add_options == 1):
-            print('=====> stretch/compress ONE corner - right <=====')
+            # print('=====> stretch/compress ONE corner - right <=====')
             corner_index = 1 if random.randint(0, 1) == 0 else 3
             corners_of_dst[corner_index][
                 0] = corners_of_dst[corner_index][0] + (
@@ -196,9 +190,7 @@ def getPerspectiveTransformationOfImage(image_array):
                                            [1, 3, 'equal']])
             # UNEQUAL left
             if (left_or_right == [0, 2]):
-                print(
-                    '=====> stretch/compress BOTH corners - UNEQUAL top <====='
-                )
+                # print('=====> stretch/compress BOTH corners - UNEQUAL top <=====')
 
                 corners_of_dst[left_or_right[0]][0] = corners_of_dst[
                     left_or_right[0]][0] + (random.randint(1, 5)
@@ -210,9 +202,7 @@ def getPerspectiveTransformationOfImage(image_array):
                                             random.randint(1, 5) * -1)
             # UNEQUAL right
             elif (left_or_right == [1, 3]):
-                print(
-                    '=====> stretch/compress BOTH corners - UNEQUAL bottom <====='
-                )
+                # print('=====> stretch/compress BOTH corners - UNEQUAL bottom <=====')
 
                 corners_of_dst[left_or_right[0]][0] = corners_of_dst[
                     left_or_right[0]][0] + (random.randint(1, 5)
@@ -224,8 +214,7 @@ def getPerspectiveTransformationOfImage(image_array):
                                             random.randint(1, 5) * -1)
             # EQUAL left
             elif (left_or_right == [0, 2, 'equal']):
-                print(
-                    '=====> stretch/compress BOTH corners - EQUAL top <=====')
+                # print('=====> stretch/compress BOTH corners - EQUAL top <=====')
 
                 equal_stretch_compress = random.randint(1, 5) if (
                     random.randint(0, 1) == 0) else random.randint(1, 5) * -1
@@ -235,9 +224,7 @@ def getPerspectiveTransformationOfImage(image_array):
                     left_or_right[1]][0] + equal_stretch_compress
             # EQUAL RIGHT
             else:
-                print(
-                    '=====> stretch/compress BOTH corners - EQUAL bottom <====='
-                )
+                # print('=====> stretch/compress BOTH corners - EQUAL bottom <=====')
 
                 equal_stretch_compress = random.randint(1, 5) if (
                     random.randint(0, 1) == 0) else random.randint(1, 5) * -1
@@ -248,7 +235,7 @@ def getPerspectiveTransformationOfImage(image_array):
 
     ####===> multiple stretch/compress options in one <===####
     else:
-        print('====> multiple stretch/compress options in one <====')
+        # print('====> multiple stretch/compress options in one <====')
         corners_of_dst[0][0] = corners_of_dst[0][0] + (
             round(random.uniform(1, 2), 2) if
             (random.randint(0, 1) == 0) else round(random.uniform(1, 2), 2) *
@@ -732,6 +719,8 @@ def createSamples(image_array, shape):
     #     scale_rot_pTransf_options = random.randint(0, 23)
 
     try:
+        if (shape != 2):
+            frontend_samples_list.append(result_image_array)
         samples_list.append(result_image_array)
         shape_list.append(shape)
         print('||=====> SAMPLE HAS BEEN CREATED <=====||')
@@ -747,11 +736,9 @@ def getSamplesList():
 
 # returns a list with lists of converted ndarrays to use them in a json-message
 def getSamplesListForJSON():
-    global samples_list
-
     json_list = []
 
-    for sample in samples_list:
+    for sample in frontend_samples_list:
         json_list.append(sample.tolist())
 
     return json_list
@@ -768,4 +755,5 @@ def clearBothDataLists():
     global shape_list
 
     samples_list.clear()
+    frontend_samples_list.clear()
     shape_list.clear()

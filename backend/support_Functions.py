@@ -1,7 +1,5 @@
 import cv2
 
-MAXSAMPLES = 30
-
 PIXELVALUETOCONVERTTO = 100
 
 
@@ -141,7 +139,3 @@ def getCornersOfDrawingFrame(listOfMaxAndMinValues):
                [maxMinValues[3], maxMinValues[0]],
                [maxMinValues[1], maxMinValues[0]]]
     return corners
-
-
-def getMaxSamplesConst():
-    return MAXSAMPLES
