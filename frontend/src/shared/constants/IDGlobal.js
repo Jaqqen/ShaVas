@@ -1,6 +1,12 @@
-export const generateButtonId = "generateButton";
+export const generateButtonId = "generate-button-container";
 export const identificationCanvasBlockId = "identification-canvas-block";
+export const identificationCanvasProbabilities = "identification-canvas-probabilities";
 export const identifyerContainerId = "identifyer-container";
 export const shapeIdentificationId = "my-canvas-shape-identifcation";
 export const shapeOneId = "my-canvas-shape-one";
 export const shapeTwoId = "my-canvas-shape-Two";
+export const appSampleOverlayId = "sample-overlay";
+export const appSampleContentId = "sample-content";
+export const sampleList = "sample-list-wrapper";
+export const sampleButtonGroup = "sample-button-group";
+export const sampleAmountInput = "sample-amount-input";

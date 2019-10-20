@@ -1,114 +1,282 @@
+* {
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+}
+
 #TraceUpdatesWebNodePresenter {
-  -webkit-box-shadow: none;
-  -moz-box-shadow: none;
-  box-shadow: none;
+    -webkit-box-shadow: none;
+    -moz-box-shadow: none;
+    box-shadow: none;
 }
 
 h1 {
-  font-family: "Gill Sans", "Gill Sans MT", "Calibri", "Trebuchet MS",
-    sans-serif;
-  margin: auto;
-  padding: 13px 0px 0px 0px;
-  width: max-content;
+    font-family: "Gill Sans", "Gill Sans MT", "Calibri", "Trebuchet MS", sans-serif;
+    margin: auto;
+    padding: 13px 0px 0px 0px;
+    width: max-content;
 }
+
 h2 {
-  font-family: "Gill Sans", "Gill Sans MT", "Calibri", "Trebuchet MS",
-    sans-serif;
-  margin: auto;
-  padding: 0 0 29px 0;
-  text-align: center;
-  width: max-content;
+    font-family: "Gill Sans", "Gill Sans MT", "Calibri", "Trebuchet MS", sans-serif;
+    margin: auto;
+    padding: 0 0 15px 0;
+    text-align: center;
+    width: max-content;
 }
+
+h4 {
+    color: #383838;
+    font-family: "Gill Sans", "Gill Sans MT", "Calibri", "Trebuchet MS", sans-serif;
+    margin: auto;
+    text-align: center;
+    width: max-content;
+}
+
+p {
+    display: inline-block;
+    font-weight: bold;
+    width: max-content;
+}
+
 hr {
-  border: none;
-  border-top: 1px solid #aaaaaa;
-  border-bottom: 1px solid #ffffff;
-  clear: both;
-  display: block;
-  font-size: 1px;
-  height: 0;
-  line-height: 0;
-  max-height: 0;
-  margin: 8px auto;
-  padding: 0;
-  position: relative;
-  width: 100%;
+    border: none;
+    border-top: 1px solid #aaaaaa;
+    border-bottom: 1px solid #ffffff;
+    clear: both;
+    display: block;
+    font-size: 1px;
+    height: 0;
+    line-height: 0;
+    max-height: 0;
+    margin: 8px auto;
+    padding: 0;
+    position: relative;
+    width: 100%;
 }
+
+#sample-overlay {
+    -webkit-box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.75);
+    -moz-box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.75);
+    box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.75);
+    height: 480px;
+    padding: 30px 60px;
+    position: absolute;
+    width: 100%;
+}
+
+#sample-overlay.loading {
+    background-image: linear-gradient(to right, #fbc2eb 0%, #a6c1ee 51%, #fbc2eb 100%);
+}
+
+@keyframes loadingFrame {
+    50% {
+        background-position: right center;
+    }
+}
+
+.loading {
+    animation-name: loadingFrame;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-in-out;
+    animation-duration: 2s;
+    background-size: 200% auto;
+}
+
+@keyframes finishedLoading {
+    0% {
+        background-image: linear-gradient(to right, #fbc2eb 0%, #a6c1ee 51%, #fbc2eb 100%);
+        opacity: 0.9;
+    }
+    100% {
+        background-image: none;
+        background-color: #a6c0eef5;
+        opacity: 1;
+    }
+}
+
+.finished {
+    animation-name: finishedLoading;
+    animation-iteration-count: 1;
+    animation-timing-function: ease-in;
+    animation-duration: 0.5s;
+    background-color: #66e08f;
+}
+
+#sample-button-group {
+    margin: auto;
+    width: fit-content;
+}
+
+.onOff {
+    opacity: 0;
+    z-index: -10;
+}
+
+#sample-content {
+    display: flex;
+    margin: auto;
+    width: fit-content;
+}
+
+#sample-list-wrapper {
+    height: 300px;
+    margin: auto 0 auto 50px;
+    overflow: hidden;
+    width: 200px;
+}
+
+.sample-container {
+    height: 300px;
+    margin: 20px 0;
+    overflow: scroll;
+}
+
+.select-shape-h3 {
+    margin: 0;
+}
+
+.sample-li {
+    font-weight: bold;
+    color: rgb(66, 64, 66);
+    font-size: 1.1em;
+}
+
+.sample-li:hover {
+    cursor: pointer;
+}
+
 canvas {
-  -webkit-box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.75);
-  -moz-box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.75);
-  box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.75);
+    -webkit-box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.75);
+    -moz-box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.75);
+    box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.75);
 }
+
 .canvasHasBeenSet {
-  -webkit-box-shadow: 0px 0px 10px 0px rgba(221, 105, 105, 0.75);
-  -moz-box-shadow: 0px 0px 10px 0px rgba(221, 105, 105, 0.75);
-  box-shadow: 0px 0px 10px 0px rgba(221, 105, 105, 0.75);
-  transition: box-shadow 0.15s ease-in-out;
+    -webkit-box-shadow: 0px 0px 10px 0px rgba(221, 105, 105, 0.75);
+    -moz-box-shadow: 0px 0px 10px 0px rgba(221, 105, 105, 0.75);
+    box-shadow: 0px 0px 10px 0px rgba(221, 105, 105, 0.75);
+    transition: box-shadow 0.15s ease-in-out;
 }
 
 button {
-  border-radius: 8px;
-  height: 30px;
-  margin: 10px 10px;
-  transition: background-color 0.35s ease-in-out;
-  width: 100%;
+    border-radius: 8px;
+    height: 30px;
+    margin: 10px 10px;
+    transition: background-color 0.35s ease-in-out;
+    width: 100%;
 }
+
 button:hover {
-  cursor: pointer;
-  background-color: #ffdbb8;
-  transition: background-color 0.25s ease-in-out;
+    cursor: pointer;
+    background-color: #ffdbb8;
+    transition: background-color 0.25s ease-in-out;
 }
 
 .App {
-  margin: auto;
-  width: fit-content;
+    margin: auto;
+    width: fit-content;
 }
 
 .canvas-block-holder {
-  display: -moz-inline-grid;
-  display: -ms-inline-grid;
-  display: inline-grid;
-  margin: 20px;
+    display: -moz-inline-grid;
+    display: -ms-inline-grid;
+    display: inline-grid;
+    margin: 20px;
 }
+
 #identification-canvas-block {
-  width: fit-content;
-  margin: 50px auto;
-  display: block;
+    width: fit-content;
+    margin: 50px auto;
+    display: block;
 }
 
 .button-container {
-  display: flex;
+    display: flex;
 }
 
-#generateButton {
-  margin: auto;
-  width: fit-content;
-}
-#generateButton button {
-  -webkit-box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.75);
-  -moz-box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.75);
-  box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.75);
-  font-size: 1em;
-  height: auto;
-  padding: 10px;
-  width: 300px;
+.inputNumberClass {
+    display: inline-block;
+    margin: 0 0 0 10px;
+    width: 55px;
 }
 
-@keyframes fadeInOpacity {
-	0% {
-		opacity: 0;
-	}
-	100% {
-		opacity: 1;
-	}
+#generate-button-container {
+    margin: auto;
+    width: fit-content;
 }
+
+#generate-button-container button {
+    -webkit-box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.75);
+    -moz-box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.75);
+    box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.75);
+    display: block;
+    font-size: 1em;
+    height: auto;
+    margin: auto;
+    padding: 10px;
+    width: 300px;
+}
+
+@keyframes identifyContainerFadeIn {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
 #identifyer-container {
-	animation-name: fadeInOpacity;
-	animation-iteration-count: 1;
-	animation-timing-function: ease-in;
-	animation-duration: 0.5s;
-	opacity: 1;
-  margin: auto;
-  width: 100%;
-  height: 500px;
+    animation-name: identifyContainerFadeIn;
+    animation-iteration-count: 1;
+    animation-timing-function: ease-in;
+    animation-duration: 0.5s;
+    opacity: 1;
+    margin: auto;
+    width: 100%;
+    height: 500px;
+}
+
+#identification-canvas-block {
+    display: flex;
+}
+
+@keyframes ProbabilitiesFadeIn {
+    0% {
+        opacity: 0;
+        margin-left: 20px;
+    }
+    100% {
+        opacity: 1;
+        margin-left: 40px;
+    }
+}
+
+#identification-canvas-probabilities {
+    animation-name: ProbabilitiesFadeIn;
+    animation-iteration-count: 1;
+    animation-timing-function: ease-in;
+    animation-duration: 0.5s;
+    margin-left: 40px;
+    position: relative;
+    opacity: 1;
+}
+
+ol {
+    padding: none !important;
+}
+
+li {
+    margin: 13px 0;
+}
+
+.sample-button {
+    -webkit-box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.75);
+    -moz-box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.75);
+    box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.75);
+    font-size: 1em;
+    height: auto;
+    padding: 10px;
+    width: 300px;
 }

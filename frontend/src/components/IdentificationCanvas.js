@@ -21,7 +21,7 @@ export default class IdentificationCanvas extends Component {
 
     const ctx = this.canvasRef.current.getContext("2d");
     // #### pre setup for drawing ####
-    ctx.lineWidth = 6;
+    ctx.lineWidth = 14;
     ctx.lineCap = "round";
     ctx.fillStyle = "white";
     ctx.fillRect(0, 0, this.state.canvasWidth, this.state.canvasHeight);
