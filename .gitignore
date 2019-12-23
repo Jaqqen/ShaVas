@@ -28,3 +28,4 @@ yarn-error.log*
 *.pickle
 drawnImages/*.png
 *.h5
+backend/*/*.pyc

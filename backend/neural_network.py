@@ -15,14 +15,22 @@ def create_training_data_conv():
     samples_list = getSamplesList()
     shape_list = getShapeList()
 
-    X_new_shape = None
+    pickle_out = open('X.pickle', 'wb')
+    pickle.dump(samples_list, pickle_out)
+    pickle_out.close()
+
+    pickle_out = open('y.pickle', 'wb')
+    pickle.dump(shape_list, pickle_out)
+    pickle_out.close()
+
+    # X_new_shape = None
 
     training_data_list.clear()
 
     for index, sample in enumerate(samples_list):
         training_data_list.append([sample, shape_list[index]])
-        if (index == 0):
-            X_new_shape = getShapeInfo(sample)
+        # if (index == 0):
+        #     X_new_shape = getShapeInfo(sample)
 
     random.shuffle(training_data_list)
 
@@ -36,17 +44,10 @@ def create_training_data_conv():
     X = np.asarray(X)
     y = np.asarray(y)
 
+    # ! needs to be fixed when work on backend starts
     X_reshaped = normalize(X, axis=1)
     # X_reshaped = np.asarray(X) / 255.0
     # X_reshaped = np.array(X).reshape(-1, X_new_shape[1], X_new_shape[0], 1)
-
-    pickle_out = open('X.pickle', 'wb')
-    pickle.dump(X_reshaped, pickle_out)
-    pickle_out.close()
-
-    pickle_out = open('y.pickle', 'wb')
-    pickle.dump(y, pickle_out)
-    pickle_out.close()
 
     model = Sequential()
 
@@ -84,7 +85,7 @@ def create_training_data_conv():
                   metrics=['accuracy'])
 
     try:
-        model.fit(X_reshaped, y, epochs=6, validation_split=0.2)
+        model.fit(X_reshaped, y, epochs=6, validation_split=0.05)
         model.save(model_name)
         return True
     except (RuntimeError, ValueError) as e:
