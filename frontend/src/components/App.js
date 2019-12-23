@@ -3,7 +3,7 @@ import "./../static/App.css";
 import CanvasBlock from "./CanvasBlock";
 import IdentifcationCanvasBlock from "./IdentificationCanvasBlock";
 import * as ID from "../shared/constants/IDGlobal";
-import { FetchService } from "../shared/Fetcher";
+import { FetchService } from "../shared/rest/Fetcher";
 
 export default class App extends Component {
     constructor(props) {
@@ -25,6 +25,7 @@ export default class App extends Component {
         };
         this.state = { ...this.initState }
 
+        // Simple bindings
         this.changeInSampleAmount = this.changeInSampleAmount.bind(this);
         this.getSample = this.getSample.bind(this);
         this.identifyCanvasContent = this.identifyCanvasContent.bind(this);
@@ -35,8 +36,10 @@ export default class App extends Component {
         this.sendDataToBackend = this.sendDataToBackend.bind(this);
         this.setGenerateButtonText = this.setGenerateButtonText.bind(this);
 
+        // * Reference to canvas
         this.sampleCanvasRef = React.createRef();
 
+        // Data functions - used in requests
         this.dataClearDataLists = this.dataClearDataLists.bind(this);
         this.dataGetSample = this.dataGetSample.bind(this);
         this.dataIdentifyCanvasContent = this.dataIdentifyCanvasContent.bind(this);
@@ -47,7 +50,8 @@ export default class App extends Component {
 
     allCanvasHaveContent() {
         const { canvasNamesWithInteraction } = this.state;
-        if (canvasNamesWithInteraction.includes(ID.shapeOneId) && canvasNamesWithInteraction.includes(ID.shapeTwoId)) {
+        if (canvasNamesWithInteraction.includes(ID.shapeOneId) &&
+            canvasNamesWithInteraction.includes(ID.shapeTwoId)) {
             return true;
         }
         return false;
@@ -71,10 +75,14 @@ export default class App extends Component {
         }
     }
 
+    /**
+     * * Sends:
+     * * |- Clears the data-list in the backend
+     */
     componentDidMount() { this.clearDataLists(); }
 
-    // ##### API-CALL #####
-    // GET - Clear lists in backend when starting application or refreshing
+    // * ##### API-CALL #####
+    // * GET - Clear lists in backend when starting application or refreshing
     clearDataLists() {
         FetchService.get('/clear_datalist', 'ClearDataLists', this.dataClearDataLists);
     }
@@ -112,11 +120,11 @@ export default class App extends Component {
             let temp_probas = [];
             data[0].forEach((probability) => {
                 temp_probas.push(probability);
-            })
+            });
             this.setState({
                 doesProbabilitiesExist: true,
                 probabilities: temp_probas
-            })
+            });
         } catch (e) { }
     }
 
@@ -127,12 +135,12 @@ export default class App extends Component {
 
             const myInterval = setInterval(() => {
                 this.getSample();
-            }, 10000)
+            }, 10000);
 
             this.setState({
                 getSampleInterval: myInterval
             });
-        }, 1000)
+        }, 1000);
     }
 
     dataStartWithExistingNN(data) {
@@ -148,7 +156,7 @@ export default class App extends Component {
         const { neuralNetworkHasBeenBuild, isGenerating, sample } = this.state;
 
         if (!this.allCanvasHaveContent() || neuralNetworkHasBeenBuild
-            || isGenerating || !sample.isSet) { return true }
+            || isGenerating || !sample.isSet) { return true; }
 
         return false;
     }
@@ -157,24 +165,24 @@ export default class App extends Component {
         const { neuralNetworkHasBeenBuild, isGenerating } = this.state;
 
         if (!this.allCanvasHaveContent() || neuralNetworkHasBeenBuild
-            || isGenerating) { return true }
+            || isGenerating) { return true; }
 
         return false;
     }
 
-    // ##### API-CALL #####
-    // GET - SAMPLE OF THE DATA THAT IS BEING GENERATED
+    // * ##### API-CALL #####
+    // * GET - SAMPLE OF THE DATA THAT IS BEING GENERATED
     getSample() {
         FetchService.get('/getSample', 'GetSample', this.dataGetSample);
     }
 
-    // ##### API-CALL #####
-    // POST - IDENTIFY THE DRAWING
+    // * ##### API-CALL #####
+    // * POST - IDENTIFY THE DRAWING
     identifyCanvasContent() {
-        const identificationCanvas = document
-            .getElementById(ID.shapeIdentificationId).getContext('2d')['canvas'].toDataURL('image/png');
+        const identificationCanvas = document.getElementById(ID.shapeIdentificationId)
+            .getContext('2d')['canvas'].toDataURL('image/png');
 
-        const obj = { 'dataI': identificationCanvas }
+        const obj = { 'dataI': identificationCanvas };
 
         FetchService.post('/identify', obj, 'IdentifyCanvasContent', this.dataIdentifyCanvasContent);
     }
@@ -190,7 +198,9 @@ export default class App extends Component {
 
         try {
             return getSampleArray.map((image, index) => {
-                return <li className="sample-li" onClick={() => this.selectSample(image)} key={index}>Shape #{index}</li>;
+                return <li className="sample-li" onClick={() => this.selectSample(image)} key={index}>
+                    Shape #{index}
+                </li>;
             })
         } catch (err) { }
     }
@@ -201,10 +211,20 @@ export default class App extends Component {
         if (isGenerating || neuralNetworkHasBeenBuild) {
             return <React.Fragment>
                 <div id={ID.sampleButtonGroup}>
-                    <button className="sample-button" onClick={() => this.restartConfirmAndResetInputLogic()}>Restart</button>
-                    <button className="sample-button" onClick={() => this.turnOffSampleOverlay()}>{isSampleViewOn ? 'Show' : 'Hide'} Sample-View</button>
+                    <button
+                        className="sample-button"
+                        onClick={() => this.restartConfirmAndResetInputLogic()}
+                    >
+                        Restart
+                    </button>
+                    <button className="sample-button" onClick={() => this.turnOffSampleOverlay()}>
+                        {isSampleViewOn ? 'Show' : 'Hide'} Sample-View
+                    </button>
                 </div>
-                <div id={ID.appSampleOverlayId} className={neuralNetworkHasBeenBuild ? 'finished' : 'loading'}>
+                <div
+                    id={ID.appSampleOverlayId}
+                    className={neuralNetworkHasBeenBuild ? 'finished' : 'loading'}
+                >
                     <h2>Sample View</h2>
                     <h4>{neuralNetworkHasBeenBuild ?
                         'Finished creating Samples and NN'
@@ -233,7 +253,7 @@ export default class App extends Component {
     }
 
     resetInputCanvasLogic() {
-        this.setState({ ...this.initState })
+        this.setState({ ...this.initState });
 
         this.clearDataLists();
     }
@@ -262,14 +282,14 @@ export default class App extends Component {
                     imageData.data[i + 2] = 255;
                     imageData.data[i + 3] = 255;
                 }
-                i += 4
+                i += 4;
             });
         });
         ctx.putImageData(imageData, 0, 0);
     }
 
-    // ##### API-CALL #####
-    // POST - DATA TO BACKEND
+    // * ##### API-CALL #####
+    // * POST - DATA TO BACKEND
     sendDataToBackend() {
         const { sample } = this.state;
 
@@ -282,7 +302,7 @@ export default class App extends Component {
 
         this.setState({ isGenerating: true });
 
-        const obj = { 'data0': canvas0, 'data1': canvas1, 'sampleAmount': sampleAmount, };
+        const obj = { 'data0': canvas0, 'data1': canvas1, 'sampleAmount': sampleAmount };
 
         FetchService.post('/send_canvas', obj, 'SendDataToBackend', this.dataSendDataToBackend);
     }
@@ -321,14 +341,14 @@ export default class App extends Component {
                     imageData.data[i + 2] = 255;
                     imageData.data[i + 3] = 255;
                 }
-                i += 4
+                i += 4;
             });
         });
         ctx.putImageData(imageData, 0, 0);
     }
 
-    // ##### API-CALL #####
-    // GET - Ask user if he wants to start with an existing NN
+    // * ##### API-CALL #####
+    // * GET - Ask user if he wants to start with an existing NN
     startWithExistingNN() {
         const confirmStart = window.confirm('Do you want to start with an existing NN?');
         if (confirmStart) {
@@ -346,7 +366,7 @@ export default class App extends Component {
 
 
     render() {
-        const dimensions = { h: 300, w: 400 };
+        const dimensions = { h: 400, w: 400 };
 
         const { neuralNetworkHasBeenBuild, isGenerating, doesProbabilitiesExist, probabilities } = this.state;
 
@@ -378,11 +398,12 @@ export default class App extends Component {
                     </div>
                     <div id={ID.generateButtonId}>
                         <div>
-                            <p>Number of samples to generate (must be at least 200): </p>
+                            <p>Number of samples to generate (min. 200): </p>
                             <input
                                 className="inputNumberClass"
                                 disabled={this.disableSampleInput()}
                                 id={ID.sampleAmountInput}
+                                placeholder={200}
                                 min="200"
                                 onChange={this.changeInSampleAmount}
                                 type="number"
