@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import MyCanvas from "./MyCanvas";
+import CanvasTemplate from "./CanvasTemplate";
 
 export default class CanvasBlock extends Component {
     constructor(props) {
@@ -21,13 +21,14 @@ export default class CanvasBlock extends Component {
         return (
             <div className="canvas-block-holder">
                 <h2>{props.shapeNumber + 1 + '.'} Canvas</h2>
-                <MyCanvas
+                <CanvasTemplate
                     _dimensions={props.canvasDimensions}
                     neuralNetworkHasBeenBuild={props.neuralNetworkHasBeenBuild}
                     idNumber={props.idNumber}
                     _id={props._id}
                     isGenerating={props.isGenerating}
                     registerCanvasInteractions={props.registerCanvasInteractions}
+                    registerClearActivity={props.registerClearActivity}
                     resetInputCanvasLogic={props.resetInputCanvasLogic}
                     selectClearingMethod={this.clearCanvasOnClick}
                 />
