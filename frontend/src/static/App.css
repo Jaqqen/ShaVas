@@ -25,6 +25,11 @@ h2 {
     width: max-content;
 }
 
+h3 {
+    margin: auto;
+    width: max-content;
+}
+
 h4 {
     color: #383838;
     font-family: "Gill Sans", "Gill Sans MT", "Calibri", "Trebuchet MS", sans-serif;
@@ -144,6 +149,11 @@ hr {
 
 .sample-li:hover {
     cursor: pointer;
+}
+
+#app-heading-container {
+    background-image: linear-gradient(to bottom, rgba(207, 244, 210, 0.7) 0%, #ffffff 90%);
+    width: 100%;
 }
 
 canvas {
@@ -279,4 +289,28 @@ li {
     height: auto;
     padding: 10px;
     width: 300px;
+}
+
+#current-process {
+    animation-name: loadingFrame;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease;
+    animation-duration: 7s;
+    background-size: 350% auto;
+    background-image: linear-gradient(to right, #ef629f 0%, #f0d3ad 40%, #ef629f 120%);
+    margin-top: 24px;
+    padding: 30px 60px;
+    position: absolute;
+    width: 100%;
+}
+
+#lower-half-text {
+    color: #252629f5;
+    display: block;
+    font-size: 1.2em;
+    font-weight: 500;
+    line-height: 1.5em;
+    margin: auto;
+    white-space: pre-line;
+    width: fit-content;
 }

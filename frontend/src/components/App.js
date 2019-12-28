@@ -486,6 +486,25 @@ export default class App extends Component {
         ctx.putImageData(imageData, 0, 0);
     }
 
+    setLowerHalfText() {
+        const { isGenerating } = this.state;
+
+        if (isGenerating) {
+            return 'Please wait until samples have been generated and the neural network has been build.';
+        } else {
+            const instructionText = [
+                'Draw two simple shapes.',
+                'Set the number of samples that should be generated with the drawn shapes.',
+                'Generate the shapes and wait until this panel disappears and another canvas appears.'];
+
+            return <ol id={ID.lowerHalfTextId}>
+                {instructionText.map((line, index) => {
+                    return <li key={index}>{line}</li>
+                })}
+            </ol>;
+        }
+    }
+
     // >>> GET - Ask user if he wants to start with an existing NN
     startWithExistingNN() {
         const confirmStart = window.confirm('Do you want to start with an existing NN?');
@@ -514,8 +533,9 @@ export default class App extends Component {
 
         return (
             <div>
-                <h1>ShaVas</h1>
-                <hr />
+                <div id={ID.appHeadingContainerId}>
+                    <h1>ShaVas</h1>
+                </div>
                 <div>
                     {/* ! Needs to be reworked. */}
                     {this.renderSampleOverlay()}
@@ -561,7 +581,6 @@ export default class App extends Component {
                             {this.setGenerateButtonText()}
                         </button>
                     </div>
-                    <hr />
                 </div>
                 {
                     neuralNetworkHasBeenBuild ?
@@ -575,7 +594,9 @@ export default class App extends Component {
                             />
                         </div>
                         :
-                        <h2>Please draw the shapes and generate samples before identification.</h2>
+                        <div id={ID.currentProcessId}>
+                            {this.setLowerHalfText()}
+                        </div>
                 }
             </div >
         );
