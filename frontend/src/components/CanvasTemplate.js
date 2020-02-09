@@ -1,6 +1,7 @@
 
 import React, { Component } from "react";
-export default class MyCanvas extends Component {
+
+export default class CanvasTemplate extends Component {
     constructor(props) {
         super(props);
         this.state = {
@@ -115,6 +116,7 @@ export default class MyCanvas extends Component {
             this.state.canvasWidth,
             this.state.canvasHeight
         );
+        this.props.registerClearActivity(this.props._id);
     }
 
     render() {
