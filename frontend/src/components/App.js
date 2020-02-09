@@ -497,9 +497,24 @@ export default class App extends Component {
                 'Set the number of samples that should be generated with the drawn shapes.',
                 'Generate the shapes and wait until this panel disappears and another canvas appears.'];
 
+            const higlightedLine = (line, index) => <li key={index}><b style={{ fontSize: '1.2em' }}>{line}</b></li>;
+            const regularLine = (line, index) => <li key={index}>{line}</li>;
+
             return <ol id={ID.lowerHalfTextId}>
                 {instructionText.map((line, index) => {
-                    return <li key={index}>{line}</li>
+                    if (!this.allCanvasHaveContent()) {
+                        if (index === 0) { return higlightedLine(line, index); }
+                        else { return regularLine(line, index) };
+                    } higlightedLine(line, index);
+                    if (this.allCanvasHaveContent() && this.disableGenerateButton()) {
+                        if (index === 1) { return higlightedLine(line, index); }
+                        else { return regularLine(line, index) };
+                    }
+                    if (!this.disableGenerateButton()) {
+                        if (index === 2) { return higlightedLine(line, index); }
+                        else { return regularLine(line, index); };
+                    }
+                    return null;
                 })}
             </ol>;
         }
