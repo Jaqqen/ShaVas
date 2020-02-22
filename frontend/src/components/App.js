@@ -15,6 +15,7 @@ export default class App extends Component {
             getSampleInterval: null,
             isGenerating: false,
             isSampleViewOn: false,
+            minimumSampleSize: 1,
             neuralNetworkHasBeenBuild: false,
             probabilities: [],
             sample: {
@@ -62,8 +63,8 @@ export default class App extends Component {
     }
 
     /**
-     * * This method checks wether the input value is >= 200 or less.
-     * ? If it's >= 200
+     * * This method checks wether the input value is >= 100 or less.
+     * ? If it's >= 100
      * * the amount is set into the state property and the isSet-variable to true.
      * ? Else
      * * the default value is used.
@@ -71,7 +72,7 @@ export default class App extends Component {
      * @param event the event which holds the value from the Input
      */
     changeInSampleAmount(event) {
-        if (event.target.value >= 200) {
+        if (event.target.value >= this.state.minimumSampleSize) {
             this.setState({
                 sample: {
                     isSet: true,
@@ -131,6 +132,7 @@ export default class App extends Component {
             const { getSampleArray, sampleCount } = this.state;
 
             const currentDataSamples = data['sample_list'].slice(sampleCount);
+            console.log(currentDataSamples);
             const nextSampleCount = sampleCount + currentDataSamples.length;
 
             let joinedSampleArray;
@@ -441,13 +443,13 @@ export default class App extends Component {
      * -> disableSampleInput()
      */
     setGenerateButtonText() {
-        const { isGenerating, neuralNetworkHasBeenBuild, sample } = this.state;
+        const { isGenerating, minimumSampleSize, neuralNetworkHasBeenBuild, sample } = this.state;
         if (this.allCanvasHaveContent()) {
             if (isGenerating) {
                 return 'Generating samples and Neural Network';
             } else if (neuralNetworkHasBeenBuild) {
                 return 'Complete';
-            } else if (!this.disableSampleInput() && sample.amount < 200) {
+            } else if (!this.disableSampleInput() && sample.amount < minimumSampleSize) {
                 return 'Need sample amount';
             } else {
                 return 'Generate samples';
@@ -494,8 +496,8 @@ export default class App extends Component {
         } else {
             const instructionText = [
                 'Draw two simple shapes.',
-                'Set the number of samples that should be generated with the drawn shapes.',
-                'Generate the shapes and wait until this panel disappears and another canvas appears.'];
+                'Set the number of samples you want to generate with the drawn shapes.',
+                'Generate shapes and wait until this panel disappears and another canvas appears.'];
 
             const higlightedLine = (line, index) => <li key={index}><b style={{ fontSize: '1.2em' }}>{line}</b></li>;
             const regularLine = (line, index) => <li key={index}>{line}</li>;
@@ -544,7 +546,7 @@ export default class App extends Component {
     render() {
         const dimensions = { h: 400, w: 400 };
 
-        const { neuralNetworkHasBeenBuild, isGenerating, doesProbabilitiesExist, probabilities } = this.state;
+        const {isGenerating, doesProbabilitiesExist, minimumSampleSize, neuralNetworkHasBeenBuild, probabilities } = this.state;
 
         return (
             <div>
@@ -578,13 +580,13 @@ export default class App extends Component {
                     </div>
                     <div id={ID.generateButtonId}>
                         <div>
-                            <p>Number of samples to generate (min. 200): </p>
+                            <p>Number of samples to generate per drawing (min. {minimumSampleSize}): </p>
                             <input
                                 className="inputNumberClass"
                                 disabled={this.disableSampleInput()}
                                 id={ID.sampleAmountInput}
-                                placeholder={200}
-                                min="200"
+                                placeholder={minimumSampleSize}
+                                min={minimumSampleSize}
                                 onChange={this.changeInSampleAmount}
                                 type="number"
                             />
