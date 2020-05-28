@@ -12,15 +12,15 @@ export default class App extends Component {
             canvasNamesWithInteraction: [],
             doesProbabilitiesExist: false,
             getSampleArray: [],
-            getSampleInterval: null,
             isGenerating: false,
             isSampleViewOn: false,
-            minimumSampleSize: 1,
+            minimumSampleSize: 10000,
             neuralNetworkHasBeenBuild: false,
             probabilities: [],
             sample: {
                 isSet: false,
                 amount: 0,
+                dimension: 75,
             },
             sampleCount: 0,
         };
@@ -28,7 +28,7 @@ export default class App extends Component {
 
         // Simple bindings
         this.changeInSampleAmount = this.changeInSampleAmount.bind(this);
-        this.getSample = this.getSample.bind(this);
+        this.getSamples = this.getSamples.bind(this);
         this.identifyCanvasContent = this.identifyCanvasContent.bind(this);
         this.registerCanvasInteractions = this.registerCanvasInteractions.bind(this);
         this.registerClearActivity = this.registerClearActivity.bind(this);
@@ -130,25 +130,27 @@ export default class App extends Component {
     dataGetSample(data) {
         if (!data['samples_created']) {
             const { getSampleArray, sampleCount } = this.state;
+            this.getSamples();
+            console.log('data:', data);
 
-            const currentDataSamples = data['sample_list'].slice(sampleCount);
-            console.log(currentDataSamples);
-            const nextSampleCount = sampleCount + currentDataSamples.length;
+            // const currentDataSamples = data['sample_list'].slice(sampleCount);
+            // const nextSampleCount = sampleCount + currentDataSamples.length;
 
-            let joinedSampleArray;
-            if (!(currentDataSamples.length <= 0)) {
-                joinedSampleArray = [...getSampleArray, ...currentDataSamples]
-                this.setState({
-                    sampleCount: nextSampleCount,
-                    getSampleArray: joinedSampleArray,
-                })
-            }
+            // let joinedSampleArray;
+            // if (!(currentDataSamples.length <= 0)) {
+            //     joinedSampleArray = [...getSampleArray, ...currentDataSamples]
+            //     this.setState({
+            //         sampleCount: nextSampleCount,
+            //         getSampleArray: joinedSampleArray,
+            //     })
+            // }
         } else {
+            console.log('data:', data);
+
             this.setState({
                 neuralNetworkHasBeenBuild: true,
                 isGenerating: false,
             });
-            clearInterval(this.state.getSampleInterval);
         }
     }
 
@@ -172,30 +174,23 @@ export default class App extends Component {
                 doesProbabilitiesExist: true,
                 probabilities: temp_probas
             });
-        } catch (e) { }
+        } catch (e) {
+            console.log(e);
+        }
     }
 
     /**
      * * This function sends the images to the backend and executes:
-     * -> getSample()
-     * * After 1 second: getSample() and sets the interval into the state.
-     * * Every 10 seconds: getSample()
+     * -> getSamples()
+     * * After 1 second: getSamples() and sets the interval into the state.
+     * * Every 10 seconds: getSamples()
      *
      * @param data ---
      */
     dataSendDataToBackend(data) {
-        console.log('OK - /send_canvas \n', data);
-        setTimeout(() => {
-            this.getSample();
+        console.log('OK - /send_canvas \n', data, new Date().toLocaleTimeString());
 
-            const myInterval = setInterval(() => {
-                this.getSample();
-            }, 10000);
-
-            this.setState({
-                getSampleInterval: myInterval
-            });
-        }, 1000);
+        this.getSamples();
     }
 
     /**
@@ -249,8 +244,11 @@ export default class App extends Component {
 
     // >>> GET - SAMPLE OF THE DATA THAT IS BEING GENERATED
     // -> dataGetSample()
-    getSample() {
-        FetchService.get('/getSample', 'GetSample', this.dataGetSample);
+    getSamples() {
+        setTimeout(() => {
+            console.log('Getting samples... - ', new Date().toLocaleTimeString())
+            FetchService.get('/getSamples', 'GetSamples', this.dataGetSample);
+        }, 5000);
     }
 
     // >>> POST - IDENTIFY THE DRAWING
@@ -348,15 +346,18 @@ export default class App extends Component {
                         'Currently generated samples: ' + getSampleArray.length + '/' + sample.amount * 2
                     }</h4>
                     <div id={ID.appSampleContentId}>
-                        <canvas
-                            className="sample-container"
-                            height={75}
-                            ref={this.sampleCanvasRef}
-                            width={100}
-                        />
+                        <div id={ID.sampleContainerVerticalWrapper}>
+                            <div id={ID.sampleContainerHorizontalWrapper}>
+                                <canvas
+                                    height={sample.dimension}
+                                    ref={this.sampleCanvasRef}
+                                    width={sample.dimension}
+                                />
+                            </div>
+                        </div>
                         <div id={ID.sampleList} >
                             <h3 className="select-shape-h3">Select a shape</h3>
-                            <ul className="sample-container sample-list">
+                            <ul className="sample-list">
                                 {this.renderLiWithArray()}
                             </ul>
                         </div>
@@ -397,8 +398,9 @@ export default class App extends Component {
      * @param image the image that should be displayed
      */
     selectSample(image) {
+        const { sample } = this.state;
         const ctx = this.sampleCanvasRef.current.getContext("2d");
-        const imageData = ctx.createImageData(100, 75);
+        const imageData = ctx.createImageData(sample.dimension, sample.dimension);
         let i = 0;
         image.forEach(row => {
             row.forEach(col => {
@@ -432,7 +434,7 @@ export default class App extends Component {
 
         this.setState({ isGenerating: true });
 
-        const obj = { 'data0': canvas0, 'data1': canvas1, 'sampleAmount': sampleAmount };
+        const obj = {'data0': canvas0, 'data1': canvas1, 'sampleAmount': sampleAmount};
 
         FetchService.post('/send_canvas', obj, 'SendDataToBackend', this.dataSendDataToBackend);
     }
@@ -499,15 +501,28 @@ export default class App extends Component {
                 'Set the number of samples you want to generate with the drawn shapes.',
                 'Generate shapes and wait until this panel disappears and another canvas appears.'];
 
-            const higlightedLine = (line, index) => <li key={index}><b style={{ fontSize: '1.2em' }}>{line}</b></li>;
-            const regularLine = (line, index) => <li key={index}>{line}</li>;
+            const higlightedLine = (line, index) => 
+                <p
+                    key={index}
+                    style={{ display: 'block', width: 'auto' }}
+                    >
+                    <b style={{ fontSize: '1.6em' }}>{line}</b>
+                </p>;
 
-            return <ol id={ID.lowerHalfTextId}>
+            const regularLine = (line, index) => 
+                <p
+                    key={index}
+                    style={{ display: 'block', width: 'auto', color: 'rgba(0, 0, 0, 0.3)' }}
+                    >
+                    {line}
+                </p>;
+
+            return <div id={ID.lowerHalfTextId}>
                 {instructionText.map((line, index) => {
                     if (!this.allCanvasHaveContent()) {
                         if (index === 0) { return higlightedLine(line, index); }
                         else { return regularLine(line, index) };
-                    } higlightedLine(line, index);
+                    }
                     if (this.allCanvasHaveContent() && this.disableGenerateButton()) {
                         if (index === 1) { return higlightedLine(line, index); }
                         else { return regularLine(line, index) };
@@ -518,7 +533,7 @@ export default class App extends Component {
                     }
                     return null;
                 })}
-            </ol>;
+            </div>;
         }
     }
 

@@ -1,50 +1,97 @@
-import copy, random, math, threading, cv2, traceback
+import copy
+import cv2
+import datetime
+import math
+import os
+import pytz
+import random
+import time
+
+
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed, wait, FIRST_COMPLETED
 from transformation_variants import getTranslationOfImage, getScaleOfImage, getRotationOfImage, getPerspectiveTransformationOfImage
+from shavas_logger import logError, logInfo, logSuccess, logDebug
 
-thread_amount = 0
+##################################
+
+#* LISTS
 SAMPLES_LIST = []
-SHAPE_LIST = []
-THREAD_LIST = []
-TRANSFORMATION_FUNCTIONS_LIST = [getTranslationOfImage, getScaleOfImage, getRotationOfImage, getPerspectiveTransformationOfImage]
+PROCESS_COMBINATION_FILTER_LIST = []
+SHAPES_LIST = []
+PROCESS_LIST = []
+# TRANSFORMATION_FUNCTIONS_LIST = [getTranslationOfImage, getScaleOfImage, getRotationOfImage, getPerspectiveTransformationOfImage]
+TRANSFORMATION_FUNCTIONS_LIST = [getPerspectiveTransformationOfImage]
 
-def createMultipleSample(image, iteration_amount, shape_number):
-    global SAMPLES_LIST, SHAPE_LIST
+#* THREAD / PROCESS
+_TH = 'Thread'
+_PRCS = 'Process'
+_res = '_res'
+_samples_list = '_samples_list'
+_shapes_list = '_shapes_list'
+_image_index = '_image_index'
+_prcs_num = '_prcs_num'
+
+#* TIME_RELATED
+START = 'START'
+FINISH = 'FINISH'
+TIMES = {
+    START: None,
+    FINISH: None
+}
+
+#* OTHERS
+TIMEZONE = None
+ARE_SAMPLES_GENERATED = None
+
+##################################
+
+def createMultipleSampleWithProcesses(image, iteration_amount, shape_number, performance_method):
+    global _res, _samples_list, _shapes_list, _image_index, _prcs_num
+    number, method = performance_method
+
+    __samples_list = []
+    __shapes_list = []
 
     for _ in range(iteration_amount):
         created_image = createSample(image)
         if (created_image is not None):
-            SAMPLES_LIST.append(created_image)
-            SHAPE_LIST.append(shape_number)
+            __samples_list.append(created_image)
+            __shapes_list.append(shape_number)
+
+    process_response = {
+        _res: f'{method} with image-index: {shape_number} and {method}-number: {number} has finished',
+        _image_index: shape_number,
+        _prcs_num: number,
+        _samples_list: __samples_list,
+        _shapes_list: __shapes_list
+    }
+
+    return process_response
+
 
 def createSample(image):
     global TRANSFORMATION_FUNCTIONS_LIST
+
     result_image = None
 
-    # get random amount of transformations, results = 1 - n
     random_amount_of_transformations = random.randint(1, len(TRANSFORMATION_FUNCTIONS_LIST))
 
-    # create order of transformations
     order_of_random_functions_to_use = []
     added_function_indices = []
 
     for index in range(random_amount_of_transformations):
-        random_function_index = random.randint(0, len(TRANSFORMATION_FUNCTIONS_LIST) - 1)
-
         while True:
+            random_function_index = random.randint(0, len(TRANSFORMATION_FUNCTIONS_LIST) - 1)
             if (random_function_index not in added_function_indices):
                 # add random function index to the list to check for
                 added_function_indices.append(random_function_index)
                 # append the function with the specific index
                 order_of_random_functions_to_use.append(TRANSFORMATION_FUNCTIONS_LIST[random_function_index])
-            else:
-                random_function_index = random.randint(0, len(TRANSFORMATION_FUNCTIONS_LIST) - 1)
-                continue
-            break
+                break
 
-    # try to execute transformation order
     try:
         transformed_image = None
-        
+
         for index, function in enumerate(order_of_random_functions_to_use):
             # if its the last iteration
             if (index == (len(order_of_random_functions_to_use) - 1)):
@@ -61,76 +108,129 @@ def createSample(image):
                 transformed_image = function(transformed_image)
 
     except Exception as e:
-        print('> \33[91m PASS - TRANSFORMATION ORDER WAS INTERRUPTED \33[0m')
+        logError(f'PASS - TRANSFORMATION ORDER WAS INTERRUPTED: {e}')
         pass
 
-    # try to return the transformed image
-    # there are cases where the image is not transformed at all
     try:
         if (result_image is not None):
-            print('> \33[92m RESULT_IMAGE WAS SAVED \33[0m')
+            #print('> \33[92m RESULT_IMAGE SUCCESSFUL \33[0m')
             return result_image
     except Exception as e:
-        print('> \33[90m PASS - RESULT_IMAGE WAS NONE \33[0m')
+        logError(f'PASS - RESULT_IMAGE WAS NONE: {e}')
         pass
 
 
-def createThreadForSamplesCreation(desired_amount, image_list):
-    global THREAD_LIST
-    setToInitialState()
+def getCurrentTimeByTimezone(_timezone):
+    tz = pytz.timezone(_timezone)
 
-    threads_needed, iteration_amount, rest = getThreadParameters(desired_amount)
+    date_now = datetime.datetime.now(tz)
+    time_now = date_now.time()
+    f_time_now = time_now.strftime("%H:%M:%S")
 
-    image_0, image_1 = image_list
+    return f_time_now
+
+
+def getProcessParameters(desired_amount, imgs_per_process):  
+    p_needed = math.floor(desired_amount / imgs_per_process)
+    p_needed = 1 if (p_needed < 1) else p_needed
+    p_needed = 4 if (p_needed > 4) else p_needed
+
+    amount_per_p = math.floor(desired_amount / p_needed)
+    last_p_amount = amount_per_p + (desired_amount % p_needed)
+
+    return (p_needed, amount_per_p, last_p_amount)
+
+
+def getFrontendSamplesList():
+    try:
+        for prcs in PROCESS_LIST:
+            if (prcs.running()):
+                logDebug(f'> Entering running Processes.......')
+                return (False, getSamplesInformationFromDoneProcesses())
+
+        return (True, getSamplesInformationWhenAllCompleted())
+    except Exception as e:
+        logError(f'Could not get Samples: {e}')
+
+
+def getSamplesInformationFromDoneProcesses():
+    global PROCESS_LIST
+    global PROCESS_COMBINATION_FILTER_LIST
+    global _image_index, _prcs_num, _samples_list
+
+    temp_frontend_samples_list = []
+
+    try:
+        logDebug(f'>> Entering DONE Processes.......')
+        for future_obj in wait(PROCESS_LIST, timeout=1, return_when=FIRST_COMPLETED).done:
+            result = future_obj.result()
+
+            PROCESS_COMBINATION_FILTER_LIST = [t for t in (set(tuple(prcs_comb_filter) for prcs_comb_filter in PROCESS_COMBINATION_FILTER_LIST))]
+            prcs_combination = (result[_image_index], result[_prcs_num])
+
+            if (not (prcs_combination in  PROCESS_COMBINATION_FILTER_LIST)):
+                PROCESS_COMBINATION_FILTER_LIST.append(prcs_combination)
+                frontend_batch = {
+                    _image_index: result[_image_index],
+                    _prcs_num: result[_prcs_num],
+                    _samples_list: [result_sample.tolist() for result_sample in result[_samples_list]]
+                }
+                temp_frontend_samples_list = temp_frontend_samples_list + [frontend_batch]
+    except Exception as e:
+        logError(f'Problem in Done_Processes: {e}')
+
+    return temp_frontend_samples_list
+
+
+def getSamplesInformationWhenAllCompleted():
+    global PROCESS_LIST
+    global SAMPLES_LIST, SHAPES_LIST
+    global TIMES, FINISH, START
+    global TIMEZONE
+    global _image_index, _prcs_num, _samples_list
+
+    frontend_samples_list = getSamplesInformationFromDoneProcesses()
+
+    try:
+        TIMES[FINISH] = time.perf_counter()
+        logInfo(f'Finished at: {getCurrentTimeByTimezone(TIMEZONE)}')
+        logInfo(f'Finished in {round(TIMES[FINISH]-TIMES[START], 3)} seconds')
+        for future_obj in as_completed(PROCESS_LIST):
+            result = future_obj.result()
+            for result_key in result:
+                if (result_key == _res):
+                    logSuccess(f'{result_key}: {result[result_key]}')
+            SAMPLES_LIST = SAMPLES_LIST + result[_samples_list]
+            SHAPES_LIST = SHAPES_LIST + result[_shapes_list]
+    except Exception as e:
+        logError(f'Problem in Completed Processes: {e}')
+
+    return frontend_samples_list
+
+
+def setAndStartProcessesByAmount(desired_amount, image_list, timezone, imgs_per_process):
+    global TIMES, START
+    global PROCESS_LIST
+    global _PRCS, _res, _samples_list, _shapes_list
+    global TIMEZONE
+    PROCESS_LIST.clear()
+    SAMPLES_LIST.clear()
+    SHAPES_LIST.clear()
+    ARE_SAMPLES_GENERATED = False
+    PROCESS_COMBINATION_FILTER_LIST.clear()
+
+    TIMEZONE = timezone
+    p_needed, amount_per_p, last_p_amount = getProcessParameters(desired_amount, imgs_per_process)
+
+    TIMES[START] = time.perf_counter()
+    logInfo(f'Started at: {getCurrentTimeByTimezone(timezone)}')
 
     for index, image in enumerate(image_list):
-        for i in range(threads_needed):
-            amount = rest if (not (i < threads_needed-1) and (rest > 0)) else iteration_amount
-            thread = threading.Thread(target=createMultipleSample,
-                                      args=[image, amount, index])
-            thread.start()
-            THREAD_LIST.append(thread)
+        for i in range(p_needed):
+            if (i < p_needed-1):
+                PROCESS_LIST.append(ProcessPoolExecutor().submit(createMultipleSampleWithProcesses, image, amount_per_p, index, (i, _PRCS)))
+            else:
+                PROCESS_LIST.append(ProcessPoolExecutor().submit(createMultipleSampleWithProcesses, image, last_p_amount, index, (i, _PRCS)))
 
-    print(f'LEN OF THREADS IN LIST: {len(getThreadList())}')
-
-
-def getSamplesListAsJson():
-    global SAMPLES_LIST
-
-    samples_list_copy = copy.deepcopy(SAMPLES_LIST)
-    frontend_json = []
-
-    for index, sample in enumerate(samples_list_copy):
-        try:
-            path = '/Users/jaqqen/ShaVas/backend/testingIMG/' + str(index) + '.png'
-            cv2.imwrite(path, sample)
-            cv2.waitKey(0)
-        except Exception as e:
-            print('Could not save image')
-
-        frontend_json.append(sample.tolist())
-
-    print(f'LEN OF SAMPLES IN LIST: {len(SAMPLES_LIST)}')
-
-    return frontend_json
-
-def getThreadList():
-    global THREAD_LIST
-    return THREAD_LIST
-
-def getThreadParameters(desired_amount):
-    divider = 100 if (desired_amount <= 1000) else 1000
-
-    th_needed = math.floor(desired_amount / divider)
-    rest = desired_amount % divider
-    th_needed = th_needed + 1 if (rest > 0) else th_needed
-    return (th_needed, divider, rest)
-
-def setToInitialState():
-    global thread_amount
-    global SAMPLES_LIST, SHAPE_LIST, THREAD_LIST
-
-    thread_amount = 0
-    SAMPLES_LIST.clear()
-    SHAPE_LIST.clear()
-    THREAD_LIST.clear()
+    for prcs in PROCESS_LIST:
+        logInfo(f'{prcs}')

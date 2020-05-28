@@ -1,15 +1,11 @@
 import cv2
 
-BLACK = 0
-PURE_WHITE = 255
-RESIZE_MULTIPLYER = 0.125
-
 
 def appendPreparedImage(image_path):
     canvas_drawing = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
 
     resized_image = resizeImageWithNewDimensions(canvas_drawing)
-    return setDrawingPixelsBlack(resized_image)
+    return setGrayishPixelsToBlack(resized_image)
 
 
 def isRowWhite(row_values, val_to_check_for):
@@ -17,17 +13,13 @@ def isRowWhite(row_values, val_to_check_for):
 
 
 def resizeImageWithNewDimensions(image):
-    global RESIZE_MULTIPLYER
+    R_DIM = 75
 
-    rows, columns = image.shape
-    new_dimensions = (int(columns * RESIZE_MULTIPLYER),
-                      int(rows * RESIZE_MULTIPLYER))
-
-    return cv2.resize(image, new_dimensions, interpolation=cv2.INTER_AREA)
+    return cv2.resize(image, (R_DIM, R_DIM), interpolation=cv2.INTER_AREA)
 
 
-def setDrawingPixelsBlack(image_array):
-    global BLACK, PURE_WHITE
+def setGrayishPixelsToBlack(image_array):
+    PURE_WHITE = 255
 
     for row_index, row_values in enumerate(image_array):
         is_row_white = isRowWhite(row_values, PURE_WHITE)
@@ -35,11 +27,11 @@ def setDrawingPixelsBlack(image_array):
         if (is_row_white == False):
             for column_index, column_value in enumerate(row_values):
                 if (column_value < PURE_WHITE):
-                    image_array[row_index, column_index] = BLACK
+                    image_array[row_index, column_index] = 0
 
     return image_array
 
 
-def saveImagesToPath(decoded_data, image_path):
+def saveImageToPath(decoded_data, image_path):
     with open(image_path, 'wb') as image_file:
         image_file.write(decoded_data)

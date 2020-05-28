@@ -1,19 +1,23 @@
-from flask import Flask, jsonify, request, Response
-from image_preperation import appendPreparedImage, saveImagesToPath
-from neural_network import create_training_data_conv, getModelName
-from tensorflow.keras.utils import normalize
-from threading import Thread
-from transformation_setup import createThreadForSamplesCreation, getSamplesListAsJson, getThreadList
+import base64
+import cv2
+import json
+import os
+import time
 
-import image_preperation as img_prep
+from flask import Flask, jsonify, request, Response
+from image_preperation import appendPreparedImage, saveImageToPath
+# from neural_network import create_training_data_conv, getModelName
+from tensorflow.keras.utils import normalize
+from transformation_setup import *
+from shavas_logger import *
+
 import numpy as np
 import tensorflow as tf
 
-import base64, cv2, json, os, time
 
 app = Flask(__name__)
 
-SHAVAS_INPUT_IMAGES_PATH = '/Users/jaqqen/JupyterRoot/ShaVas_2/SHAVAS_INPUT_IMAGES/'
+
 PREPARED_SHAVAS_INPUT_IMAGES_PATH_PREFIX = './prepared_shavas_input_images/prepared_shavas_image_'
 PREPARED_SHAVAS_INPUT_IMAGES_PATH_FILETYPE = '.pickle'
 
@@ -22,12 +26,8 @@ DATA_0_KEY = 'data0'
 DATA_1_KEY = 'data1'
 SAMPLE_AMOUNT_KEY = 'sampleAmount'
 
-# temporarily holds holds both canvas-input data
-temp_data_list = []
+IMGS_PER_PROCESS = 1000
 
-# holds both images - prepareImageBeforeConversion and convertPixelValues
-# also is used when createMultipleSamples
-image_list = []
 
 # is used to tell the frontend that all samples have been created and the
 # neural network has been build
@@ -43,13 +43,9 @@ print('!!!!!!!!!!!!!!!!!!!!!!!!!!')
 def clear_datalist():
     global samples_and_nn_isDone
 
-    temp_data_list.clear()
-    image_list.clear()
     samples_and_nn_isDone = False
 
     response_str = (
-        '>>> Cleared datalist amount: ' + str(len(temp_data_list)),
-        '>>> Cleared image_list: ' + str(len(image_list)),
         '>>> Cleared samples_and_nn_isDone: ' + str(samples_and_nn_isDone),
     )
     return jsonify(response_str), 200
@@ -60,27 +56,31 @@ def clear_datalist():
 # async action: creates multiple different samples
 @app.route('/send_canvas', methods=['POST'])
 def send_canvas():
-    global DATA_0_KEY, DATA_1_KEY, IMAGE_PATH_PREFIX, SAMPLE_AMOUNT_KEY, SHAVAS_INPUT_IMAGES_PATH
+    global DATA_0_KEY, DATA_1_KEY
+    global IMAGE_PATH_PREFIX
+    global SAMPLE_AMOUNT_KEY, IMGS_PER_PROCESS
 
     json_Obj = request.get_json()
 
     json_images = [json_Obj[DATA_0_KEY], json_Obj[DATA_1_KEY]]
+
+    image_list = []
 
     for index, drawing in enumerate(json_images):
         header, encoded = drawing.split(",", 1)
         decoded_data = base64.b64decode(encoded)
         drawing_path = IMAGE_PATH_PREFIX + 'canvasImage_' + str(index) + '.png'
 
-        saveImagesToPath(decoded_data, drawing_path)
+        saveImageToPath(decoded_data, drawing_path)
 
         image_list.append(appendPreparedImage(drawing_path))
 
-    createThreadForSamplesCreation(json_Obj[SAMPLE_AMOUNT_KEY], image_list)
+    setAndStartProcessesByAmount(json_Obj[SAMPLE_AMOUNT_KEY], image_list, 'Europe/Berlin', IMGS_PER_PROCESS)
 
-    return jsonify(
-        'Saved Images and generation of data has started, please wait.'), 200
+    return jsonify('Saved Images and generation of data has started, please wait.'), 200
 
 
+#! To be added later on
 # checks if a neural network model already exists
 @app.route('/if_neural_network', methods=['GET'])
 def if_neural_network():
@@ -92,17 +92,23 @@ def if_neural_network():
 
 
 # gets the current samples list as lists in list for json.dump
-@app.route('/getSample', methods=['GET'])
-def getSample():
-    global samples_and_nn_isDone
+@app.route('/getSamples', methods=['GET'])
+def getSamples():
+    are_samples_created = False
+    frontend_samples_list = None
+    try:
+        logDebug(f'Getting Samples........')
+        _are_samples_created, _frontend_samples_list = getFrontendSamplesList()
 
-    for t in getThreadList():
-        if not t.isAlive():
-            # get results from thtead
-            t.handled = True
-    my_threads = [t for t in getThreadList() if not t.handled]
-
-    js = {"sample_list": getSamplesListAsJson(), "samples_created": my_threads}
+        are_samples_created = _are_samples_created
+        frontend_samples_list = _frontend_samples_list
+    except Exception as e:
+        logError(f'COULD NOT GET SAMPLES_INFORMATION: {e}')
+        pass
+    js = {
+          "sample_list": frontend_samples_list,
+          "samples_created": are_samples_created
+          }
     return Response(json.dumps(js), mimetype='application/json'), 200
 
 
@@ -132,6 +138,7 @@ def identify():
                     mimetype='application/json'), 200
 
 
+#! To be added later on
 # start with existing NN
 @app.route('/start_with_existing_nn', methods=['GET'])
 def start_with_existing_nn():
@@ -158,4 +165,4 @@ def start_with_existing_nn():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, threaded=True)

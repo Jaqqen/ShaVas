@@ -98,7 +98,7 @@ def getMaxRotationAngleOfSide(side_corner_angle, distance_to_side, new_AK):
 
     max_angle = math.degrees(math.atan(new_GK/new_AK))   
 
-    return 180 if (max_angle >= 45) else max_angles
+    return 180 if (max_angle >= 45) else max_angle
 
 #####################
 #### TRANSLATION ####
@@ -212,35 +212,32 @@ def getPerspectiveTransformationOfImage(image_array):
     start_top_right = corners_of_original[P_TRANSFORMATION[TOP_RIGHT]]
     start_bottom_left = corners_of_original[P_TRANSFORMATION[BOTTOM_LEFT]]
     start_bottom_right = corners_of_original[P_TRANSFORMATION[BOTTOM_RIGHT]]
-    
+
     corners_of_dst = copy.deepcopy(corners_of_original)
     dst_top_left = corners_of_dst[P_TRANSFORMATION[TOP_LEFT]]
     dst_top_right = corners_of_dst[P_TRANSFORMATION[TOP_RIGHT]]
     dst_bottom_left = corners_of_dst[P_TRANSFORMATION[BOTTOM_LEFT]]
     dst_bottom_right = corners_of_dst[P_TRANSFORMATION[BOTTOM_RIGHT]]
-    
+
     current_distances_dict = getCornerDistancesDictionary(getMaxMinCornerValues(image_array), image_array)
-    
+
     # get random amount of corners to drag, results = 1 - 4
     random_amount_of_corners_to_drag = random.randint(1, len(ALL_POSSIBLE_DRAGABLE_CORNERS))
-    
+
     # create a random list of corner drag operations
     corners_to_drag = []
     added_drag_corner_indices = []
-    
-    for index in range(random_amount_of_corners_to_drag):
-        random_drag_corner_index = random.randint(0, len(ALL_POSSIBLE_DRAGABLE_CORNERS) - 1)
-        
+
+    for _ in range(random_amount_of_corners_to_drag):        
         while True:
+            random_drag_corner_index = random.randint(0, len(ALL_POSSIBLE_DRAGABLE_CORNERS) - 1)
+
             if (random_drag_corner_index not in added_drag_corner_indices):
                 # add random corner index to the list to check for
                 added_drag_corner_indices.append(random_drag_corner_index)
                 # append the corner with the specific index
                 corners_to_drag.append(ALL_POSSIBLE_DRAGABLE_CORNERS[random_drag_corner_index])
-            else:
-                random_drag_corner_index = random.randint(0, len(ALL_POSSIBLE_DRAGABLE_CORNERS) - 1)
-                continue
-            break    
+                break
     
     # counts the occurences of the words 'top', 'left', 'right', 'bottom'
     amount_of_corner_occurences = []

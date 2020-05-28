@@ -18,13 +18,14 @@ Y = 'Y'
 
 def getPixelsOfDrawing(image_array):
     drawing_pixels_holder = []
+    BLACK = 0
 
-    for row_index, row_values in enumerate(image_array):        
-        hasDrawingColor = hasRowBlackPixels(row_values, 0)
+    for row_index, row_values in enumerate(image_array):
+        hasDrawingColor = hasRowBlackPixels(row_values, BLACK)
 
         if (hasDrawingColor == True):
             for column_index, column_value in enumerate(row_values):
-                if (column_value == 0):
+                if (column_value == BLACK):
                     drawing_pixels_holder.append((row_index, column_index))
 
     return drawing_pixels_holder
