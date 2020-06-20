@@ -29,3 +29,7 @@ yarn-error.log*
 drawnImages/*.png
 *.h5
 backend/*/*.pyc
+backend/testingIMG/
+backend/samplesDir/
+frontend/src/shared/samplesDir/
+backend/responses

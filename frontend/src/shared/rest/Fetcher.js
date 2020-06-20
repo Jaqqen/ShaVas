@@ -6,7 +6,7 @@
  * @param fetchFunctionName 
  */
 export const catchErrorOnFetch = (errorMessage, fetchFunctionName) => {
-    console.log('Error - ' + fetchFunctionName, errorMessage);
+    console.error('Error - ' + fetchFunctionName, errorMessage);
 };
 
 /**
@@ -18,11 +18,19 @@ export const catchErrorOnFetch = (errorMessage, fetchFunctionName) => {
  * @param fetchFunctionName just a name to be recorded in the error message
  */
 export const checkStatus = (response, fetchFunctionName) => {
-    if (response['ok']) { return response.json(); }
-    else {
-        const error = new Error(fetchFunctionName + ': ', response.statusText);
-        error.response = response;
-        throw error;
+    try {
+        if (response['ok']) {
+            return response.text();
+        }
+        else {
+            const _error = new Error(fetchFunctionName + ': ', response.statusText);
+            _error.response = response;
+            throw _error;
+        }
+    } catch (error) {
+        const _error = new Error(fetchFunctionName + ': ', error);
+        _error.response = response;
+        throw _error;
     }
 };
 
@@ -41,16 +49,28 @@ export const FetchService = {
     get: async (path, fetchFunctionName, dataFunction) => {
         await fetch(path)
             .then(response => checkStatus(response, fetchFunctionName))
+            .then(text => parseJson(text))
             .then(data => dataFunction(data))
             .catch(error => catchErrorOnFetch(error, fetchFunctionName));
     },
     post: async (path, obj, fetchFunctionName, dataFunction) => {
         await fetch(path, postSettings(obj))
             .then(response => checkStatus(response, fetchFunctionName))
+            .then(text => parseJson(text))
             .then(data => dataFunction(data))
             .catch(error => catchErrorOnFetch(error, fetchFunctionName));
     },
 }
+
+const parseJson = (text) => {
+    try {
+        const _text = text ? JSON.parse(text) : {};
+        return _text;
+    } catch (error) {
+        const errorObj = new Error(error);
+        throw errorObj
+    }
+};
 
 /**
  * * This builds an json-type Object with the bodyOfObject-prop as its body-content.

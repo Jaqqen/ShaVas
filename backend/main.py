@@ -1,52 +1,36 @@
+import base64
+import cv2
+import json
+import os
+import time
+
 from flask import Flask, jsonify, request, Response
-from threading import Thread
+from image_preperation import appendPreparedImage, saveImageToPath
+# from neural_network import create_training_data_conv, getModelName
 from tensorflow.keras.utils import normalize
-import tensorflow as tf
+from transformation_setup import *
+from shavas_logger import *
+
 import numpy as np
-import base64, os, time, json, cv2
-import support_Functions as supF
-from samples import createSamples, getSamplesListForJSON, clearBothDataLists
-from neural_network import create_training_data_conv, getModelName
+import tensorflow as tf
+
 
 app = Flask(__name__)
 
-# temporarily holds holds both canvas-input data
-temp_data_list = []
 
-# holds both images - prepareImageBeforeConversion and convertPixelValues
-# also is used when createMultipleSamples
-image_list = []
+PREPARED_SHAVAS_INPUT_IMAGES_PATH_PREFIX = './prepared_shavas_input_images/prepared_shavas_image_'
+PREPARED_SHAVAS_INPUT_IMAGES_PATH_FILETYPE = '.pickle'
 
-# is used to tell the frontend that all samples have been created and the
-# neural network has been build
-samples_and_nn_isDone = False
+IMAGE_PATH_PREFIX = '../drawnImages/'
+DATA_0_KEY = 'data0'
+DATA_1_KEY = 'data1'
+SAMPLE_AMOUNT_KEY = 'sampleAmount'
 
-# path prefix for the images
-IMAGEPATHPREFIX = '../drawnImages/'
-
-# amount of samples that was passed from the frontend
-amount_of_samples_to_create = 0
+IMGS_PER_PROCESS = 1000
 
 print('!!!!!!!!!!!!!!!!!!!!!!!!!!')
 print('!!!!!!!!START MAIN!!!!!!!!')
 print('!!!!!!!!!!!!!!!!!!!!!!!!!!')
-
-
-# Clears data when starting application or refreshing
-@app.route('/clear_datalist', methods=['GET'])
-def clear_datalist():
-    global samples_and_nn_isDone
-
-    temp_data_list.clear()
-    image_list.clear()
-    samples_and_nn_isDone = False
-
-    response_str = (
-        '>>> Cleared datalist amount: ' + str(len(temp_data_list)),
-        '>>> Cleared image_list: ' + str(len(image_list)),
-        '>>> Cleared samples_and_nn_isDone: ' + str(samples_and_nn_isDone),
-    )
-    return jsonify(response_str), 200
 
 
 # takes two base64-strings and saves them as images
@@ -54,35 +38,31 @@ def clear_datalist():
 # async action: creates multiple different samples
 @app.route('/send_canvas', methods=['POST'])
 def send_canvas():
-    global amount_of_samples_to_create
+    global DATA_0_KEY, DATA_1_KEY
+    global IMAGE_PATH_PREFIX
+    global SAMPLE_AMOUNT_KEY, IMGS_PER_PROCESS
 
     json_Obj = request.get_json()
 
-    temp_data_list.append(json_Obj['data0'])
-    temp_data_list.append(json_Obj['data1'])
+    json_images = [json_Obj[DATA_0_KEY], json_Obj[DATA_1_KEY]]
 
-    amount_of_samples_to_create = json_Obj['sampleAmount']
+    image_list = []
 
-    for index, data in enumerate(temp_data_list):
-        header, encoded = data.split(",", 1)
+    for index, drawing in enumerate(json_images):
+        header, encoded = drawing.split(",", 1)
         decoded_data = base64.b64decode(encoded)
-        path = IMAGEPATHPREFIX + 'canvasImage_' + str(index) + '.png'
-        with open(path, 'wb') as f:
-            f.write(decoded_data)
-        # appending the images with converted drawing pixels and resized
-        image_list.append(
-            supF.convertPixelValues(supF.prepareImageBeforeConversion(path)))
-    path_of_undefined = IMAGEPATHPREFIX + 'canvasImage_undefined.png'
-    image_list.append(
-        supF.convertPixelValues(
-            supF.prepareImageBeforeConversion(path_of_undefined)))
+        drawing_path = IMAGE_PATH_PREFIX + 'canvasImage_' + str(index) + '.png'
 
-    Thread(target=createMultipleSamples).start()
+        saveImageToPath(decoded_data, drawing_path)
 
-    return jsonify(
-        'Saved Images and generation of data has started, please wait.'), 200
+        image_list.append(appendPreparedImage(drawing_path))
+
+    setAndStartProcessesByAmount(json_Obj[SAMPLE_AMOUNT_KEY], image_list, 'Europe/Berlin', IMGS_PER_PROCESS)
+
+    return jsonify('Saved Images and generation of data has started, please wait.'), 200
 
 
+#! To be added later on
 # checks if a neural network model already exists
 @app.route('/if_neural_network', methods=['GET'])
 def if_neural_network():
@@ -94,14 +74,37 @@ def if_neural_network():
 
 
 # gets the current samples list as lists in list for json.dump
-@app.route('/getSample', methods=['GET'])
-def getSample():
-    global samples_and_nn_isDone
+@app.route('/getSamples', methods=['GET'])
+def getSamples():
+    are_samples_created = False
+    frontend_samples_list = None
+    try:
+        logDebug(f'Getting Samples........')
+        _are_samples_created, _frontend_samples_list = getFrontendSamplesList()
+        frontend_samples_list = _frontend_samples_list
+        are_samples_created = _are_samples_created
 
-    sample_list = getSamplesListForJSON()
+    except Exception as e:
+        logError(f'COULD NOT GET SAMPLES_INFORMATION: {e}')
+        pass
 
-    js = {"sample_list": sample_list, "samples_created": samples_and_nn_isDone}
-    return Response(json.dumps(js), mimetype='application/json'), 200
+    js = {
+        "sample_list_batches": frontend_samples_list,
+        "samples_created": are_samples_created
+        }
+
+    current_frontend_json = None
+    try:
+        current_frontend_json = json.dumps(js)
+    except Exception as e:
+        logError(f"Couldn't dump{e}")
+
+
+    res_file_path = f"responses/response_{getCurrentTimeByTimezone('Europe/Berlin')}.json"
+    with open(res_file_path, "w") as res_file: 
+        res_file.write(current_frontend_json) 
+
+    return Response(current_frontend_json, mimetype='application/json'), 200
 
 
 # identifies the image
@@ -110,11 +113,11 @@ def identify():
     data_i = request.get_json()['dataI']
     header, encoded = data_i.split(",", 1)
     decoded_data = base64.b64decode(encoded)
-    path = IMAGEPATHPREFIX + 'identifyerImage.png'
+    path = IMAGE_PATH_PREFIX + 'identifyerImage.png'
     with open(path, 'wb') as f:
         f.write(decoded_data)
 
-    image = supF.prepareImageBeforeConversion(path)
+    # image = supportFunctions.prepareImageBeforeConversion(path)
     # image = image / 255.0
     image_list = []
     image_list.append(image)
@@ -130,22 +133,23 @@ def identify():
                     mimetype='application/json'), 200
 
 
+#! To be added later on
 # start with existing NN
 @app.route('/start_with_existing_nn', methods=['GET'])
 def start_with_existing_nn():
     shape_one_image = None
     shape_two_image = None
-    for index, image_name in enumerate(os.listdir(IMAGEPATHPREFIX)):
+    for index, image_name in enumerate(os.listdir(IMAGE_PATH_PREFIX)):
         if (image_name == 'canvasImage_0.png'):
-            path = IMAGEPATHPREFIX + image_name
+            path = IMAGE_PATH_PREFIX + image_name
             image = cv2.imread(path, 0)
             shape_one_image = image.tolist()
         elif (image_name == 'canvasImage_1.png'):
-            path = IMAGEPATHPREFIX + image_name
+            path = IMAGE_PATH_PREFIX + image_name
             image = cv2.imread(path, 0)
             shape_two_image = image.tolist()
 
-    sample_list = getSamplesListForJSON()
+    # sample_list = getSamplesListForJSON()
 
     js = {
         "shape_one_image": shape_one_image,
@@ -155,29 +159,5 @@ def start_with_existing_nn():
     return Response(json.dumps(js), mimetype='application/json'), 200
 
 
-# creates samples for first and second shape and returns a boolean
-# to indicate if all samples have been created
-def createMultipleSamples():
-
-    global samples_and_nn_isDone
-    global image_list
-
-    clearBothDataLists()
-
-    for index, image in enumerate(image_list):
-        for i in range(0, amount_of_samples_to_create):
-            print('<------------ :', i, ' -- ', index)
-            if (index == 0):
-                createSamples(image, 0)
-            elif (index == 1):
-                createSamples(image, 1)
-            else:
-                pass
-                # createSamples(image, 2)
-
-    samples_and_nn_isDone = create_training_data_conv()
-    return samples_and_nn_isDone
-
-
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, threaded=True)

@@ -26,6 +26,7 @@ h2 {
 }
 
 h3 {
+    color: #7c7c7c;
     margin: auto;
     width: max-content;
 }
@@ -58,6 +59,27 @@ hr {
     padding: 0;
     position: relative;
     width: 100%;
+}
+
+ul {
+    list-style-type: none;
+    height: 400px;
+    overflow: scroll;
+    padding: 0;
+}
+
+.samples-table-block {
+    width: 40%;
+}
+
+.samples-block {
+    width: 60%;
+}
+
+.samples-tables-sample {
+    margin: 3px auto;
+    margin-top: 6px;
+    width: fit-content;
 }
 
 #sample-overlay {
@@ -120,34 +142,67 @@ hr {
 
 #sample-content {
     display: flex;
+    margin: 30px auto auto auto;
+    width: 600px;
+}
+
+#sample-list-wrapper {
+    margin: auto 0 auto 30px;
+    overflow: hidden;
+    width: 50%;
+}
+
+.sample-list {
+    height: 275px;
+    margin: 10px 0;
+    overflow: scroll;
+}
+
+#sample-container-vertical-wrapper {
+    margin: auto;
+    width: 50%;
+}
+
+#sample-container-horizontal-wrapper {
     margin: auto;
     width: fit-content;
 }
 
-#sample-list-wrapper {
-    height: 300px;
-    margin: auto 0 auto 50px;
-    overflow: hidden;
-    width: 200px;
-}
-
 .sample-container {
-    height: 300px;
-    margin: 20px 0;
-    overflow: scroll;
+    margin: auto;
 }
 
 .select-shape-h3 {
     margin: 0;
 }
 
+.active-batch-arrow {
+    vertical-align: bottom;
+}
+
 .sample-li {
-    font-weight: bold;
     color: rgb(66, 64, 66);
+    font-weight: bold;
     font-size: 1.1em;
+    height: 25px;
+    margin: 5px;
 }
 
 .sample-li:hover {
+    cursor: pointer;
+}
+
+.sample-li-batch {
+    color: rgb(66, 64, 66);
+    font-weight: bold;
+    font-size: 1.1em;
+    position: absolute;
+    margin-top: -2px;
+    margin-left: 18px;
+    height: 25px;
+}
+
+.sample-li-batch:hover {
     cursor: pointer;
 }
 
@@ -188,6 +243,20 @@ button:hover {
     width: fit-content;
 }
 
+.samples-tables-block-holder {
+    display: -moz-inline-grid;
+    display: -ms-inline-grid;
+    display: inline-grid;
+    margin: 20px;
+    width: 300px;
+}
+
+.samples-tables-block-content-holder {
+    /* display: -moz-inline-grid;
+    display: -ms-inline-grid; */
+    display: flex;
+}
+
 .canvas-block-holder {
     display: -moz-inline-grid;
     display: -ms-inline-grid;
@@ -208,7 +277,7 @@ button:hover {
 .inputNumberClass {
     display: inline-block;
     margin: 0 0 0 10px;
-    width: 55px;
+    width: 70px;
 }
 
 #generate-button-container {
@@ -277,10 +346,6 @@ ol {
     padding: none !important;
 }
 
-li {
-    margin: 13px 0;
-}
-
 .sample-button {
     -webkit-box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.75);
     -moz-box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.75);
@@ -311,6 +376,11 @@ li {
     font-weight: 500;
     line-height: 1.5em;
     margin: auto;
-    white-space: pre-line;
+    text-align: center;
+    width: 85%;
+}
+
+.default-samples-batch-text {
+    margin: 200px auto 0;
     width: fit-content;
 }
