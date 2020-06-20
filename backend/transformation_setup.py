@@ -275,37 +275,53 @@ def setAndStartProcessesByAmount(desired_amount, image_list, timezone, imgs_per_
     PROCESS_COMBINATION_FILTER_SET = set()
 
 
-    for child_dir in os.listdir(SAMPLES_DIR):
-        child_path = f'{SAMPLES_DIR}/{child_dir}'
-        shutil.rmtree(child_path, ignore_errors=True)
+    try:
+        for child_dir in os.listdir(SAMPLES_DIR):
+            child_path = f'{SAMPLES_DIR}/{child_dir}'
+            shutil.rmtree(child_path, ignore_errors=True)
 
-    for child_file in os.listdir(RESPONSES_DIR):
-        child_file_path = f'{RESPONSES_DIR}/{child_file}'
-        os.remove(child_file_path)
+        for child_file in os.listdir(RESPONSES_DIR):
+            child_file_path = f'{RESPONSES_DIR}/{child_file}'
+            os.remove(child_file_path)
 
-    TIMEZONE = timezone
-    p_needed, amount_per_p, last_p_amount = getProcessParameters(desired_amount, imgs_per_process)
+        TIMEZONE = timezone
+        p_needed, amount_per_p, last_p_amount = getProcessParameters(desired_amount, imgs_per_process)
 
-    batches_per_prcs = math.ceil((desired_amount/p_needed)/BATCH_SIZE)
-    MAX_BATCHES_PER_IMG = batches_per_prcs * p_needed
+        batches_per_prcs = math.ceil((desired_amount/p_needed)/BATCH_SIZE)
+        MAX_BATCHES_PER_IMG = batches_per_prcs * p_needed
 
-    MAX_BATCHES_PER_IMG = math.ceil(desired_amount/BATCH_SIZE)
-    logInfo(f'len_of_batches_in_total: {MAX_BATCHES_PER_IMG * 2}')
+        MAX_BATCHES_PER_IMG = math.ceil(desired_amount/BATCH_SIZE)
+        logInfo(f'len_of_batches_in_total: {MAX_BATCHES_PER_IMG * 2}')
 
-    TIMES[START] = time.perf_counter()
+        TIMES[START] = time.perf_counter()
 
-    start_time = getCurrentTimeByTimezone(timezone)
-    logInfo(f'Started at: {start_time}')
+        start_time = getCurrentTimeByTimezone(timezone)
+        logInfo(f'Started at: {start_time}')
 
-    for index, image in enumerate(image_list):
-        for i in range(p_needed):
-            if (i < p_needed-1):
-                PROCESS_LIST.append(ProcessPoolExecutor().submit(createMultipleSampleWithProcesses, image, amount_per_p, index, (i, _PRCS)))
-            else:
-                PROCESS_LIST.append(ProcessPoolExecutor().submit(createMultipleSampleWithProcesses, image, last_p_amount, index, (i, _PRCS)))
+        for index, image in enumerate(image_list):
+            for i in range(p_needed):
+                if (i < p_needed-1):
+                    PROCESS_LIST.append(ProcessPoolExecutor().submit(createMultipleSampleWithProcesses, image, amount_per_p, index, (i, _PRCS)))
+                else:
+                    PROCESS_LIST.append(ProcessPoolExecutor().submit(createMultipleSampleWithProcesses, image, last_p_amount, index, (i, _PRCS)))
 
-    for prcs in PROCESS_LIST:
-        logInfo(f'{prcs}')
+        for prcs in PROCESS_LIST:
+            logInfo(f'{prcs}')
+
+        return {
+            'startTime': start_time,
+            'batchesPerImg': MAX_BATCHES_PER_IMG,
+            'prcsStartedPerImg': p_needed * 2,
+            'hasBeenStarted': True
+        }
+    except Exception as e:
+        return {
+            'startTime': None,
+            'batchesPerImg': 0,
+            'prcsStartedPerImg': 0,
+            'hasBeenStarted': False
+        }
+
 
 def saveSamples(current_result_samples_list_batch, current_image_index, current_prcs_num, batch_num):
     global SAMPLES_DIR

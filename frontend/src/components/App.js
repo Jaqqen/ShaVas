@@ -13,9 +13,7 @@ export default class App extends Component {
             canvasNamesWithInteraction: [],
             doesProbabilitiesExist: false,
             generatedSamples: {},
-            getSampleArray: [],
             isGenerating: false,
-            isSampleViewOn: false,
             minimumSampleSize: 1100,
             neuralNetworkHasBeenBuild: false,
             probabilities: [],
@@ -23,7 +21,7 @@ export default class App extends Component {
                 isSet: false,
                 amount: 0,
             },
-            sampleCount: 0,
+            startingProcessInformation: {},
         };
         this.state = { ...this.initState }
 
@@ -33,6 +31,7 @@ export default class App extends Component {
         this.identifyCanvasContent = this.identifyCanvasContent.bind(this);
         this.registerCanvasInteractions = this.registerCanvasInteractions.bind(this);
         this.registerClearActivity = this.registerClearActivity.bind(this);
+        this.renderStartingProcessInformation = this.renderStartingProcessInformation.bind(this);
         this.resetInputCanvasLogic = this.resetInputCanvasLogic.bind(this);
         this.restartConfirmAndResetInputLogic = this.restartConfirmAndResetInputLogic.bind(this);
         this.sendImagesDataToBackend = this.sendImagesDataToBackend.bind(this);
@@ -83,12 +82,12 @@ export default class App extends Component {
         try {
             const { generatedSamples } = this.state;
 
-            const samplesListBatches = data['sample_list_batches'];
+            const samplesListBatches = data.sample_list_batches;
             let tempGeneratedSamples = generatedSamples;
 
             samplesListBatches.forEach(samplesBatch => {
-                const currentImageIndex = samplesBatch['_image_index'];
-                const currentSamplesList = samplesBatch['_samples_list'];
+                const currentImageIndex = samplesBatch._image_index;
+                const currentSamplesList = samplesBatch._samples_list;
 
                 if (!(currentImageIndex in tempGeneratedSamples)) {
                     tempGeneratedSamples[currentImageIndex.toString()] = [currentSamplesList];
@@ -146,12 +145,20 @@ export default class App extends Component {
      * @param data ---
      */
     dataSendDataToBackend(data) {
-        console.log('OK - /send_canvas \n', data, new Date().toLocaleTimeString());
-
         this.getSamples();
+
+        this.setState({
+            startingProcessInformation: {
+                startTime: data.startTime,
+                batchesPerImg: data.batchesPerImg,
+                prcsStartedPerImg: data.prcsStartedPerImg,
+                hasBeenStarted: data.hasBeenStarted
+            }
+        })
     }
 
     /**
+     * ! needs to be reworked
      * * This function uses the data-object to set the images into their canvasses and
      * * update the state with an already generated sample-list and set the
      * * neuralNetworkHasBeenBuild-variable to true.
@@ -161,10 +168,10 @@ export default class App extends Component {
     dataStartWithExistingNN(data) {
         this.setImageIntoDrawingCanvas(ID.shapeOneId, data.shape_one_image);
         this.setImageIntoDrawingCanvas(ID.shapeTwoId, data.shape_two_image);
-        this.setState({
-            getSampleArray: [...data.sample_list],
-            neuralNetworkHasBeenBuild: true
-        });
+        // this.setState({
+        //     getSampleArray: [...data.sample_list],
+        //     neuralNetworkHasBeenBuild: true
+        // });
     }
 
     /**
@@ -242,6 +249,18 @@ export default class App extends Component {
         const newCanvasNamesWithInteraction = canvasNamesWithInteraction
             .filter(currentCanvasName => currentCanvasName !== canvasName);
         this.setState({ canvasNamesWithInteraction: newCanvasNamesWithInteraction, });
+    }
+
+    renderStartingProcessInformation() {
+        const { startTime, batchesPerImg, prcsStartedPerImg } = this.state.startingProcessInformation;
+
+        return (
+            <React.Fragment>
+                <span>Start: <i>{startTime}</i></span>
+                <span>Batches per image: <i>{batchesPerImg}</i></span>
+                <span>Processes started per image: <i>{prcsStartedPerImg}</i></span>
+            </React.Fragment>
+        );
     }
 
     /**
@@ -394,7 +413,7 @@ export default class App extends Component {
 
         const {
             isGenerating, doesProbabilitiesExist, minimumSampleSize, neuralNetworkHasBeenBuild,
-            probabilities, generatedSamples
+            probabilities, generatedSamples, startingProcessInformation
         } = this.state;
 
         return (
@@ -403,7 +422,17 @@ export default class App extends Component {
                     <h1>ShaVas</h1>
                 </div>
                 <div>
+                    <div className="starting-process-information">
+                        {
+                            Object.entries(startingProcessInformation).length > 0 ?
+                                this.renderStartingProcessInformation()
+                                :
+                                null
+                        }
+                    </div>
                     <div className="App">
+                        <div className={isGenerating ? "loading-process left-process" : ""}></div>
+                        <div className={isGenerating ? "loading-process right-process" : ""}></div>
                         <SamplesBatchTableBlock
                             isGenerating={isGenerating}
                             neuralNetworkHasBeenBuild={neuralNetworkHasBeenBuild}
@@ -470,7 +499,7 @@ export default class App extends Component {
                             />
                         </div>
                         :
-                        <div id={ID.currentProcessId}>
+                        <div className="loading-process instructions">
                             {this.setLowerHalfText()}
                         </div>
                 }

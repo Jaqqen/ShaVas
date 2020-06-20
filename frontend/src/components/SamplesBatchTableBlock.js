@@ -26,7 +26,7 @@ export default class SamplesBatchTableBlock extends Component {
 
         if (isGenerating || neuralNetworkHasBeenBuild) {
             return <div className="samples-tables-block-holder">
-                        <h3>{shapeNumber+1}. Canvas Samples</h3>
+                        <h3>{shapeNumber+1}. Canvas Batches</h3>
                         <div className="samples-tables-block-content-holder">
                             {
                                 samplesList !== undefined && samplesList !== null ?

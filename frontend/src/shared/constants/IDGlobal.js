@@ -1,7 +1,6 @@
 export const appHeadingContainerId = "app-heading-container";
 export const appSampleContentId = "sample-content";
 export const appSampleOverlayId = "sample-overlay";
-export const currentProcessId = "current-process"
 export const generateButtonId = "generate-button-container";
 export const identificationCanvasBlockId = "identification-canvas-block";
 export const identificationCanvasProbabilities = "identification-canvas-probabilities";

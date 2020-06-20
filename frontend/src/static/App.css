@@ -252,8 +252,6 @@ button:hover {
 }
 
 .samples-tables-block-content-holder {
-    /* display: -moz-inline-grid;
-    display: -ms-inline-grid; */
     display: flex;
 }
 
@@ -356,16 +354,50 @@ ol {
     width: 300px;
 }
 
-#current-process {
-    animation-name: loadingFrame;
+.loading-process {
     animation-iteration-count: infinite;
     animation-timing-function: ease;
     animation-duration: 7s;
     background-size: 350% auto;
-    background-image: linear-gradient(to right, #ef629f 0%, #f0d3ad 40%, #ef629f 120%);
     margin-top: 24px;
-    padding: 30px 60px;
+}
+
+.left-process {
+    animation-name: loadingFrame;
+
+    background-image: linear-gradient(to right, #A1FFCE 0%, #F7F8F8 40%, #A1FFCE 120%);
+
+    left: 0;
     position: absolute;
+    padding: 30px 60px;
+    width: 130px;
+    height: 500px;
+    z-index: -10;
+}
+
+.right-process {
+    transform: rotate(180deg);
+
+
+    animation-name: loadingFrame;
+
+    background-image: linear-gradient(to right, #A1FFCE 0%, #F7F8F8 40%, #A1FFCE 120%);
+
+    right: 0;
+    position: absolute;
+    padding: 30px 60px;
+    width: 130px;
+    height: 500px;
+    z-index: -10;
+}
+
+.instructions {
+    animation-name: loadingFrame;
+
+    background-image: linear-gradient(to right, #ef629f 0%, #f0d3ad 40%, #ef629f 120%);
+
+    position: absolute;
+    padding: 30px 60px;
     width: 100%;
 }
 
@@ -383,4 +415,24 @@ ol {
 .default-samples-batch-text {
     margin: 200px auto 0;
     width: fit-content;
+}
+
+.starting-process-information {
+    color: #252629f5;
+    font-size: 1.5em;
+    font-weight: 700;
+    margin: auto;
+    margin-bottom: 40px;
+    margin-top: 20px;
+    width: fit-content;
+}
+
+.starting-process-information span {
+    margin-left: 25px;
+    margin-right: 25px;
+}
+
+.starting-process-information span i{
+    color: #2526298a;
+    font-weight: 500;
 }

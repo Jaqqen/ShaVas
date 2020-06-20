@@ -57,9 +57,9 @@ def send_canvas():
 
         image_list.append(appendPreparedImage(drawing_path))
 
-    setAndStartProcessesByAmount(json_Obj[SAMPLE_AMOUNT_KEY], image_list, 'Europe/Berlin', IMGS_PER_PROCESS)
+    response = setAndStartProcessesByAmount(json_Obj[SAMPLE_AMOUNT_KEY], image_list, 'Europe/Berlin', IMGS_PER_PROCESS)
 
-    return jsonify('Saved Images and generation of data has started, please wait.'), 200
+    return jsonify(response), 200
 
 
 #! To be added later on
