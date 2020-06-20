@@ -13,7 +13,7 @@ def isRowWhite(row_values, val_to_check_for):
 
 
 def resizeImageWithNewDimensions(image):
-    R_DIM = 75
+    R_DIM = 100
 
     return cv2.resize(image, (R_DIM, R_DIM), interpolation=cv2.INTER_AREA)
 

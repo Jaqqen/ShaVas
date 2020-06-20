@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import "./../static/App.css";
 import CanvasBlock from "./CanvasBlock";
+import SamplesBatchTableBlock from "./SamplesBatchTableBlock";
 import IdentifcationCanvasBlock from "./IdentificationCanvasBlock";
 import * as ID from "../shared/constants/IDGlobal";
 import { FetchService } from "../shared/rest/Fetcher";
@@ -11,16 +12,16 @@ export default class App extends Component {
         this.initState = {
             canvasNamesWithInteraction: [],
             doesProbabilitiesExist: false,
+            generatedSamples: {},
             getSampleArray: [],
             isGenerating: false,
             isSampleViewOn: false,
-            minimumSampleSize: 10000,
+            minimumSampleSize: 1100,
             neuralNetworkHasBeenBuild: false,
             probabilities: [],
             sample: {
                 isSet: false,
                 amount: 0,
-                dimension: 75,
             },
             sampleCount: 0,
         };
@@ -32,7 +33,6 @@ export default class App extends Component {
         this.identifyCanvasContent = this.identifyCanvasContent.bind(this);
         this.registerCanvasInteractions = this.registerCanvasInteractions.bind(this);
         this.registerClearActivity = this.registerClearActivity.bind(this);
-        this.renderLiWithArray = this.renderLiWithArray.bind(this);
         this.resetInputCanvasLogic = this.resetInputCanvasLogic.bind(this);
         this.restartConfirmAndResetInputLogic = this.restartConfirmAndResetInputLogic.bind(this);
         this.sendImagesDataToBackend = this.sendImagesDataToBackend.bind(this);
@@ -42,7 +42,6 @@ export default class App extends Component {
         this.sampleCanvasRef = React.createRef();
 
         // Data functions - used in requests
-        this.dataClearDataLists = this.dataClearDataLists.bind(this);
         this.dataGetSample = this.dataGetSample.bind(this);
         this.dataIdentifyCanvasContent = this.dataIdentifyCanvasContent.bind(this);
         this.dataSendDataToBackend = this.dataSendDataToBackend.bind(this);
@@ -62,15 +61,6 @@ export default class App extends Component {
         return false;
     }
 
-    /**
-     * * This method checks wether the input value is >= 100 or less.
-     * ? If it's >= 100
-     * * the amount is set into the state property and the isSet-variable to true.
-     * ? Else
-     * * the default value is used.
-     *
-     * @param event the event which holds the value from the Input
-     */
     changeInSampleAmount(event) {
         if (event.target.value >= this.state.minimumSampleSize) {
             this.setState({
@@ -89,78 +79,46 @@ export default class App extends Component {
         }
     }
 
-    /**
-     * * Executes:
-     * -> clearDataLists()
-     */
-    componentDidMount() { this.clearDataLists(); }
-
-    // >>> GET - Clear lists in backend when starting application or refreshing
-    // -> dataClearDataLists()
-    clearDataLists() {
-        FetchService.get('/clear_datalist', 'ClearDataLists', this.dataClearDataLists);
-    }
-
-    /**
-     * * Prints all clear-actions from the backend into the frontend console.
-     *
-     * @param data an object which holds a string-like text with all clear-actions from the backend
-     */
-    dataClearDataLists(data) {
-        Object.keys(data).forEach(key => {
-            console.log(key + ' ' + data[key]);
-        });
-    }
-
-    /**
-     * ? If all data-samples have not been created:
-     * * First, the currentDataSamples-Array is formed by slicing the data-object by the current
-     * * sampleCount.
-     * * Secondly, the nextSampleCount is formed by the current sampleCount and the length of the 
-     * * sliced data-object.
-     * * Third, a new array is formed by joining the current getSampleArray with the currentDataSamples.
-     * * Now the state is updated with the joinedSampleArray and nextSampleCount.
-     * ? Else
-     * * The state is told that the neural network has been build and the isGenerating-property is set
-     * * back to false.
-     * * Afterwards, clear the interval that keeps this function going.
-     *
-     * @param data 
-     */
     dataGetSample(data) {
-        if (!data['samples_created']) {
-            const { getSampleArray, sampleCount } = this.state;
-            this.getSamples();
-            console.log('data:', data);
+        try {
+            const { generatedSamples } = this.state;
 
-            // const currentDataSamples = data['sample_list'].slice(sampleCount);
-            // const nextSampleCount = sampleCount + currentDataSamples.length;
+            const samplesListBatches = data['sample_list_batches'];
+            let tempGeneratedSamples = generatedSamples;
 
-            // let joinedSampleArray;
-            // if (!(currentDataSamples.length <= 0)) {
-            //     joinedSampleArray = [...getSampleArray, ...currentDataSamples]
-            //     this.setState({
-            //         sampleCount: nextSampleCount,
-            //         getSampleArray: joinedSampleArray,
-            //     })
-            // }
-        } else {
-            console.log('data:', data);
+            samplesListBatches.forEach(samplesBatch => {
+                const currentImageIndex = samplesBatch['_image_index'];
+                const currentSamplesList = samplesBatch['_samples_list'];
 
-            this.setState({
-                neuralNetworkHasBeenBuild: true,
-                isGenerating: false,
+                if (!(currentImageIndex in tempGeneratedSamples)) {
+                    tempGeneratedSamples[currentImageIndex.toString()] = [currentSamplesList];
+                } else {
+                    tempGeneratedSamples[currentImageIndex.toString()].push(currentSamplesList);
+                }
             });
+
+            if (!data['samples_created']) {
+                this.setState({
+                    generatedSamples: tempGeneratedSamples,
+                });
+                this.getSamples();
+            }
+            else {
+                this.setState({
+                    generatedSamples: tempGeneratedSamples,
+                    neuralNetworkHasBeenBuild: true,
+                    isGenerating: false,
+                });
+                console.log('DONE - /getSamples');
+            }
+        } catch (error) {
+            console.error(error, new Date().toLocaleTimeString());
+            this.getSamples();
         }
     }
 
     /**
-     * ? Try
-     * * It read the array of the first data-property and pushed its values into temp_probas.
-     * * Afterwards, the state is updated by telling it that probabilities exist and setting the
-     * * temp_probas to its corresponding state-property.
-     * ? Catch
-     * * Pass
+     * ! nneds change
      *
      * @param data an object which holds the probabilities
      */
@@ -246,9 +204,8 @@ export default class App extends Component {
     // -> dataGetSample()
     getSamples() {
         setTimeout(() => {
-            console.log('Getting samples... - ', new Date().toLocaleTimeString())
             FetchService.get('/getSamples', 'GetSamples', this.dataGetSample);
-        }, 5000);
+        }, 10000);
     }
 
     // >>> POST - IDENTIFY THE DRAWING
@@ -288,95 +245,10 @@ export default class App extends Component {
     }
 
     /**
-     * ! Needs to be reworked.
-     * * This function renders every li-element in the sample-overlay.
-     * -> selectSample(image)
-     * ? Try
-     * * Map every image and index to a li-element and return it.
-     * ? Catch
-     * * Pass
-     */
-    renderLiWithArray() {
-        const { getSampleArray } = this.state;
-
-        try {
-            return getSampleArray.map((image, index) => {
-                return <li className="sample-li" onClick={() => this.selectSample(image)} key={index}>
-                    Shape #{index}
-                </li>;
-            })
-        } catch (err) { }
-    }
-
-    /**
-     * ! Needs to be reworked.
-     * * This function renders the sample-overlay.
-     * -> restartConfirmAndResetInputLogic()
-     * -> turnOnOffSampleOverlay()
-     * -> renderLiWithArray()
-     * ? If isGenerating || neuralNetworkHasBeenBuild
-     * * return the whole overlay-html
-     * ? Else
-     * * return nothing
-     */
-    renderSampleOverlay() {
-        const { getSampleArray, isGenerating, neuralNetworkHasBeenBuild, isSampleViewOn, sample } = this.state;
-
-        if (isGenerating || neuralNetworkHasBeenBuild) {
-            return <React.Fragment>
-                <div id={ID.sampleButtonGroup}>
-                    <button
-                        className="sample-button"
-                        onClick={() => this.restartConfirmAndResetInputLogic()}
-                    >
-                        Restart
-                    </button>
-                    <button className="sample-button" onClick={() => this.turnOnOffSampleOverlay()}>
-                        {isSampleViewOn ? 'Show' : 'Hide'} Sample-View
-                    </button>
-                </div>
-                <div
-                    id={ID.appSampleOverlayId}
-                    className={neuralNetworkHasBeenBuild ? 'finished' : 'loading'}
-                >
-                    <h2>Sample View</h2>
-                    <h4>{neuralNetworkHasBeenBuild ?
-                        'Finished creating Samples and NN'
-                        :
-                        'Currently generated samples: ' + getSampleArray.length + '/' + sample.amount * 2
-                    }</h4>
-                    <div id={ID.appSampleContentId}>
-                        <div id={ID.sampleContainerVerticalWrapper}>
-                            <div id={ID.sampleContainerHorizontalWrapper}>
-                                <canvas
-                                    height={sample.dimension}
-                                    ref={this.sampleCanvasRef}
-                                    width={sample.dimension}
-                                />
-                            </div>
-                        </div>
-                        <div id={ID.sampleList} >
-                            <h3 className="select-shape-h3">Select a shape</h3>
-                            <ul className="sample-list">
-                                {this.renderLiWithArray()}
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </React.Fragment>
-        } else {
-            return null
-        }
-    }
-
-    /**
-     * * This function resets the state to its intial state and clears the generated data in the backend.
-     * -> clearDataLists()
+     * * This function resets the state to its intial state
      */
     resetInputCanvasLogic() {
         this.setState({ ...this.initState });
-
-        this.clearDataLists();
     }
 
     /**
@@ -390,35 +262,6 @@ export default class App extends Component {
         if (confirmResetOnSampleView) {
             this.resetInputCanvasLogic();
         }
-    }
-
-    /**
-     * * This function uses the image-parameter to fill the Canvas-context with the image.data.
-     * 
-     * @param image the image that should be displayed
-     */
-    selectSample(image) {
-        const { sample } = this.state;
-        const ctx = this.sampleCanvasRef.current.getContext("2d");
-        const imageData = ctx.createImageData(sample.dimension, sample.dimension);
-        let i = 0;
-        image.forEach(row => {
-            row.forEach(col => {
-                if (col <= 250) {
-                    imageData.data[i] = 0;
-                    imageData.data[i + 1] = 0;
-                    imageData.data[i + 2] = 0;
-                    imageData.data[i + 3] = 255;
-                } else {
-                    imageData.data[i] = 255;
-                    imageData.data[i + 1] = 255;
-                    imageData.data[i + 2] = 255;
-                    imageData.data[i + 3] = 255;
-                }
-                i += 4;
-            });
-        });
-        ctx.putImageData(imageData, 0, 0);
     }
 
     // >>> POST - DATA TO BACKEND
@@ -545,23 +388,14 @@ export default class App extends Component {
         }
     }
 
-    /**
-     * ! Needs to be reworked.
-     * * This function toggles the sample-overlay.
-     */
-    turnOnOffSampleOverlay() {
-        this.setState(prevState => ({
-            isSampleViewOn: !prevState.isSampleViewOn,
-        }));
-
-        document.getElementById(ID.appSampleOverlayId).classList.toggle("onOff");
-    }
-
-
     render() {
         const dimensions = { h: 400, w: 400 };
+        const shapeNumber = {zero: 0, one:1};
 
-        const {isGenerating, doesProbabilitiesExist, minimumSampleSize, neuralNetworkHasBeenBuild, probabilities } = this.state;
+        const {
+            isGenerating, doesProbabilitiesExist, minimumSampleSize, neuralNetworkHasBeenBuild,
+            probabilities, generatedSamples
+        } = this.state;
 
         return (
             <div>
@@ -569,9 +403,13 @@ export default class App extends Component {
                     <h1>ShaVas</h1>
                 </div>
                 <div>
-                    {/* ! Needs to be reworked. */}
-                    {this.renderSampleOverlay()}
                     <div className="App">
+                        <SamplesBatchTableBlock
+                            isGenerating={isGenerating}
+                            neuralNetworkHasBeenBuild={neuralNetworkHasBeenBuild}
+                            samplesList={generatedSamples[shapeNumber.zero]}
+                            shapeNumber={shapeNumber.zero}
+                        />
                         <CanvasBlock
                             _id={ID.shapeOneId}
                             canvasDimensions={dimensions}
@@ -580,7 +418,7 @@ export default class App extends Component {
                             registerCanvasInteractions={this.registerCanvasInteractions}
                             resetInputCanvasLogic={this.resetInputCanvasLogic}
                             registerClearActivity={this.registerClearActivity}
-                            shapeNumber={0}
+                            shapeNumber={shapeNumber.zero}
                         />
                         <CanvasBlock
                             _id={ID.shapeTwoId}
@@ -590,7 +428,13 @@ export default class App extends Component {
                             registerCanvasInteractions={this.registerCanvasInteractions}
                             resetInputCanvasLogic={this.resetInputCanvasLogic}
                             registerClearActivity={this.registerClearActivity}
-                            shapeNumber={1}
+                            shapeNumber={shapeNumber.one}
+                        />
+                        <SamplesBatchTableBlock
+                            isGenerating={isGenerating}
+                            neuralNetworkHasBeenBuild={neuralNetworkHasBeenBuild}
+                            samplesList={generatedSamples[shapeNumber.one]}
+                            shapeNumber={shapeNumber.one}
                         />
                     </div>
                     <div id={ID.generateButtonId}>
@@ -600,10 +444,10 @@ export default class App extends Component {
                                 className="inputNumberClass"
                                 disabled={this.disableSampleInput()}
                                 id={ID.sampleAmountInput}
-                                placeholder={minimumSampleSize}
                                 min={minimumSampleSize}
                                 onChange={this.changeInSampleAmount}
                                 type="number"
+                                step={1000}
                             />
                         </div>
                         <button

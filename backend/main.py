@@ -28,27 +28,9 @@ SAMPLE_AMOUNT_KEY = 'sampleAmount'
 
 IMGS_PER_PROCESS = 1000
 
-
-# is used to tell the frontend that all samples have been created and the
-# neural network has been build
-samples_and_nn_isDone = False
-
 print('!!!!!!!!!!!!!!!!!!!!!!!!!!')
 print('!!!!!!!!START MAIN!!!!!!!!')
 print('!!!!!!!!!!!!!!!!!!!!!!!!!!')
-
-
-# Clears data when starting application or refreshing
-@app.route('/clear_datalist', methods=['GET'])
-def clear_datalist():
-    global samples_and_nn_isDone
-
-    samples_and_nn_isDone = False
-
-    response_str = (
-        '>>> Cleared samples_and_nn_isDone: ' + str(samples_and_nn_isDone),
-    )
-    return jsonify(response_str), 200
 
 
 # takes two base64-strings and saves them as images
@@ -99,17 +81,30 @@ def getSamples():
     try:
         logDebug(f'Getting Samples........')
         _are_samples_created, _frontend_samples_list = getFrontendSamplesList()
-
-        are_samples_created = _are_samples_created
         frontend_samples_list = _frontend_samples_list
+        are_samples_created = _are_samples_created
+
     except Exception as e:
         logError(f'COULD NOT GET SAMPLES_INFORMATION: {e}')
         pass
+
     js = {
-          "sample_list": frontend_samples_list,
-          "samples_created": are_samples_created
-          }
-    return Response(json.dumps(js), mimetype='application/json'), 200
+        "sample_list_batches": frontend_samples_list,
+        "samples_created": are_samples_created
+        }
+
+    current_frontend_json = None
+    try:
+        current_frontend_json = json.dumps(js)
+    except Exception as e:
+        logError(f"Couldn't dump{e}")
+
+
+    res_file_path = f"responses/response_{getCurrentTimeByTimezone('Europe/Berlin')}.json"
+    with open(res_file_path, "w") as res_file: 
+        res_file.write(current_frontend_json) 
+
+    return Response(current_frontend_json, mimetype='application/json'), 200
 
 
 # identifies the image
