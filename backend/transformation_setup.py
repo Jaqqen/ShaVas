@@ -154,7 +154,6 @@ def getFrontendSamplesList():
             if (prcs.running() or
                 any(child_dict[_hasBeenRead] == False for child_dict in SAVED_BATCH_INFO_LIST) or
                 len(SAVED_BATCH_INFO_LIST) < (MAX_BATCHES_PER_IMG * 2)):
-                logDebug(f'> Entering DONE Processes.......')
                 return (False, getSamplesInformationFromDoneProcesses())
             else:
                 return (True, getSamplesInformationWhenAllCompleted())
@@ -250,8 +249,10 @@ def getSamplesInformationWhenAllCompleted():
 
     try:
         TIMES[FINISH] = time.perf_counter()
-        logInfo(f'Finished at: {getCurrentTimeByTimezone(TIMEZONE)}')
-        logInfo(f'Finished in {round(TIMES[FINISH]-TIMES[START], 3)} seconds')
+        end_time = getCurrentTimeByTimezone(TIMEZONE)
+        logInfo(f'Finished at: {end_time}')
+        time_spent = round(TIMES[FINISH]-TIMES[START], 3)
+        logInfo(f'Finished in {time_spent} seconds')
         for future_obj in as_completed(PROCESS_LIST):
             result = future_obj.result()
             for result_key in result:
@@ -259,10 +260,24 @@ def getSamplesInformationWhenAllCompleted():
                     logSuccess(f'{result_key}: {result[result_key]}')
             SAMPLES_LIST = SAMPLES_LIST + result[_samples_list]
             SHAPES_LIST = SHAPES_LIST + result[_shapes_list]
+
+        return {
+            'sample_list_batches': frontend_samples_list,
+            'end_time': end_time,
+            'time_spent': time_spent,
+            'all_responses_returned': True
+        }
     except Exception as e:
         logError(f'Problem in Completed Processes: {e}')
 
-    return frontend_samples_list
+        return {
+            'frontend_samples_list': [],
+            'end_time': None,
+            'time_spent': None,
+            'all_responses_returned': False
+        }
+
+
 
 
 def setAndStartProcessesByAmount(desired_amount, image_list, timezone, imgs_per_process):
@@ -291,12 +306,12 @@ def setAndStartProcessesByAmount(desired_amount, image_list, timezone, imgs_per_
         MAX_BATCHES_PER_IMG = batches_per_prcs * p_needed
 
         MAX_BATCHES_PER_IMG = math.ceil(desired_amount/BATCH_SIZE)
-        logInfo(f'len_of_batches_in_total: {MAX_BATCHES_PER_IMG * 2}')
 
         TIMES[START] = time.perf_counter()
 
         start_time = getCurrentTimeByTimezone(timezone)
         logInfo(f'Started at: {start_time}')
+
 
         for index, image in enumerate(image_list):
             for i in range(p_needed):
@@ -304,9 +319,6 @@ def setAndStartProcessesByAmount(desired_amount, image_list, timezone, imgs_per_
                     PROCESS_LIST.append(ProcessPoolExecutor().submit(createMultipleSampleWithProcesses, image, amount_per_p, index, (i, _PRCS)))
                 else:
                     PROCESS_LIST.append(ProcessPoolExecutor().submit(createMultipleSampleWithProcesses, image, last_p_amount, index, (i, _PRCS)))
-
-        for prcs in PROCESS_LIST:
-            logInfo(f'{prcs}')
 
         return {
             'startTime': start_time,

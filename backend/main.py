@@ -76,28 +76,31 @@ def if_neural_network():
 # gets the current samples list as lists in list for json.dump
 @app.route('/getSamples', methods=['GET'])
 def getSamples():
-    are_samples_created = False
-    frontend_samples_list = None
+    js = {
+        "sample_list_batches": [],
+        "samples_created": False
+    }
     try:
-        logDebug(f'Getting Samples........')
-        _are_samples_created, _frontend_samples_list = getFrontendSamplesList()
-        frontend_samples_list = _frontend_samples_list
-        are_samples_created = _are_samples_created
+        _are_samples_created, frontend_content = getFrontendSamplesList()
 
+        if (isinstance(frontend_content, dict)):
+            js = {
+                "samples_end_response": frontend_content,
+                "samples_created": _are_samples_created
+            }
+        else:
+            js = {
+                "sample_list_batches": frontend_content,
+                "samples_created": _are_samples_created
+            }
     except Exception as e:
         logError(f'COULD NOT GET SAMPLES_INFORMATION: {e}')
-        pass
 
-    js = {
-        "sample_list_batches": frontend_samples_list,
-        "samples_created": are_samples_created
-        }
-
-    current_frontend_json = None
     try:
         current_frontend_json = json.dumps(js)
     except Exception as e:
         logError(f"Couldn't dump{e}")
+        current_frontend_json = None
 
 
     res_file_path = f"responses/response_{getCurrentTimeByTimezone('Europe/Berlin')}.json"

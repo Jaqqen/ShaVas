@@ -12,6 +12,7 @@ export default class App extends Component {
         this.initState = {
             canvasNamesWithInteraction: [],
             doesProbabilitiesExist: false,
+            finishingProcessInformation: {},
             generatedSamples: {},
             isGenerating: false,
             minimumSampleSize: 1100,
@@ -30,6 +31,7 @@ export default class App extends Component {
         this.getSamples = this.getSamples.bind(this);
         this.identifyCanvasContent = this.identifyCanvasContent.bind(this);
         this.registerCanvasInteractions = this.registerCanvasInteractions.bind(this);
+        this.renderFinishingProcessInformation = this.renderFinishingProcessInformation.bind(this);
         this.registerClearActivity = this.registerClearActivity.bind(this);
         this.renderStartingProcessInformation = this.renderStartingProcessInformation.bind(this);
         this.resetInputCanvasLogic = this.resetInputCanvasLogic.bind(this);
@@ -82,33 +84,52 @@ export default class App extends Component {
         try {
             const { generatedSamples } = this.state;
 
-            const samplesListBatches = data.sample_list_batches;
             let tempGeneratedSamples = generatedSamples;
 
-            samplesListBatches.forEach(samplesBatch => {
-                const currentImageIndex = samplesBatch._image_index;
-                const currentSamplesList = samplesBatch._samples_list;
+            if ('samples_end_response' in data && data.samples_created) {
 
-                if (!(currentImageIndex in tempGeneratedSamples)) {
-                    tempGeneratedSamples[currentImageIndex.toString()] = [currentSamplesList];
+                const frontendContent = data.samples_end_response;
+                const allResponsesReturned = frontendContent.all_responses_returned;
+                if (allResponsesReturned) {
+                    frontendContent.sample_list_batches.forEach(samplesBatch => {
+                        const currentImageIndex = samplesBatch._image_index;
+                        const currentSamplesList = samplesBatch._samples_list;
+
+                        if (!(currentImageIndex in tempGeneratedSamples)) {
+                            tempGeneratedSamples[currentImageIndex.toString()] = [currentSamplesList];
+                        } else {
+                            tempGeneratedSamples[currentImageIndex.toString()].push(currentSamplesList);
+                        }
+                    });
+
+                    this.setState({
+                        finishingProcessInformation: {
+                            endTime: frontendContent.end_time,
+                            timeSpent: frontendContent.time_spent
+                        },
+                        generatedSamples: tempGeneratedSamples,
+                        neuralNetworkHasBeenBuild: true,
+                        isGenerating: !allResponsesReturned,
+                    });
                 } else {
-                    tempGeneratedSamples[currentImageIndex.toString()].push(currentSamplesList);
+                    this.getSamples();
                 }
-            });
+            } else {
+                data.sample_list_batches.forEach(samplesBatch => {
+                    const currentImageIndex = samplesBatch._image_index;
+                    const currentSamplesList = samplesBatch._samples_list;
 
-            if (!data['samples_created']) {
+                    if (!(currentImageIndex in tempGeneratedSamples)) {
+                        tempGeneratedSamples[currentImageIndex.toString()] = [currentSamplesList];
+                    } else {
+                        tempGeneratedSamples[currentImageIndex.toString()].push(currentSamplesList);
+                    }
+                });
+
                 this.setState({
                     generatedSamples: tempGeneratedSamples,
                 });
                 this.getSamples();
-            }
-            else {
-                this.setState({
-                    generatedSamples: tempGeneratedSamples,
-                    neuralNetworkHasBeenBuild: true,
-                    isGenerating: false,
-                });
-                console.log('DONE - /getSamples');
             }
         } catch (error) {
             console.error(error, new Date().toLocaleTimeString());
@@ -148,13 +169,13 @@ export default class App extends Component {
         this.getSamples();
 
         this.setState({
+            isGenerating: data.hasBeenStarted,
             startingProcessInformation: {
                 startTime: data.startTime,
                 batchesPerImg: data.batchesPerImg,
                 prcsStartedPerImg: data.prcsStartedPerImg,
-                hasBeenStarted: data.hasBeenStarted
             }
-        })
+        });
     }
 
     /**
@@ -263,6 +284,17 @@ export default class App extends Component {
         );
     }
 
+    renderFinishingProcessInformation() {
+        const { endTime, timeSpent } = this.state.finishingProcessInformation;
+
+        return (
+            <React.Fragment>
+                <span>End: <i>{endTime}</i></span>
+                <span>Time spent: <i>{timeSpent}</i></span>
+            </React.Fragment>
+        );
+    }
+
     /**
      * * This function resets the state to its intial state
      */
@@ -293,8 +325,6 @@ export default class App extends Component {
             .getContext('2d')['canvas'].toDataURL('image/png');
 
         const sampleAmount = parseInt(sample.amount);
-
-        this.setState({ isGenerating: true });
 
         const obj = {'data0': canvas0, 'data1': canvas1, 'sampleAmount': sampleAmount};
 
@@ -413,7 +443,7 @@ export default class App extends Component {
 
         const {
             isGenerating, doesProbabilitiesExist, minimumSampleSize, neuralNetworkHasBeenBuild,
-            probabilities, generatedSamples, startingProcessInformation
+            probabilities, generatedSamples, startingProcessInformation, finishingProcessInformation
         } = this.state;
 
         return (
@@ -426,6 +456,15 @@ export default class App extends Component {
                         {
                             Object.entries(startingProcessInformation).length > 0 ?
                                 this.renderStartingProcessInformation()
+                                :
+                                null
+                        }
+                        {
+                            Object.entries(finishingProcessInformation).length > 0 ?
+                                <React.Fragment>
+                                     ••• 
+                                    {this.renderFinishingProcessInformation()}
+                                </React.Fragment>
                                 :
                                 null
                         }
