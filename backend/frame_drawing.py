@@ -1,3 +1,5 @@
+from shavas_logger import *
+
 TOP = 'TOP'
 RIGHT = 'RIGHT'
 LEFT = 'LEFT'
@@ -18,15 +20,18 @@ Y = 'Y'
 
 def getPixelsOfDrawing(image_array):
     drawing_pixels_holder = []
-    BLACK = 0
+    BLACK = 50
 
-    for row_index, row_values in enumerate(image_array):
-        hasDrawingColor = hasRowBlackPixels(row_values, BLACK)
+    try:
+        for row_index, row_values in enumerate(image_array):
+            hasDrawingColor = hasRowBlackPixels(row_values, BLACK)
 
-        if (hasDrawingColor == True):
-            for column_index, column_value in enumerate(row_values):
-                if (column_value == BLACK):
-                    drawing_pixels_holder.append((row_index, column_index))
+            if (hasDrawingColor == True):
+                for column_index, column_value in enumerate(row_values):
+                    if (column_value <= BLACK):
+                        drawing_pixels_holder.append((row_index, column_index))
+    except Exception as e:
+        logError(f'> \33[91m ERROR - GETTING PIXELS failed:\33[0m {e}')
 
     return drawing_pixels_holder
 
@@ -34,13 +39,16 @@ def getMaxMinCornerValues(image_array):
     global MAX_Y, MAX_X, MIN_Y, MIN_X
     drawing_pixels_holder = getPixelsOfDrawing(image_array)
 
-    max_Y = max(drawing_pixels_holder, key=lambda item: item[0])[0]
+    try:
+        max_Y = max(drawing_pixels_holder, key=lambda item: item[0])[0]
 
-    max_X = max(drawing_pixels_holder, key=lambda item: item[1])[1]
+        max_X = max(drawing_pixels_holder, key=lambda item: item[1])[1]
 
-    min_Y = min(drawing_pixels_holder, key=lambda item: item[0])[0]
+        min_Y = min(drawing_pixels_holder, key=lambda item: item[0])[0]
 
-    min_X = min(drawing_pixels_holder, key=lambda item: item[1])[1]
+        min_X = min(drawing_pixels_holder, key=lambda item: item[1])[1]
+    except Exception as e:
+        logError(f'> \33[91m ERROR - MaxMin failed:\33[0m {e}')
 
     return {MAX_Y: max_Y,
             MAX_X: max_X,

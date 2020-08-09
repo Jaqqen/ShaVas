@@ -44,9 +44,9 @@ export default class IdentifcationCanvasBlock extends Component {
                         <h2>Probabilities</h2>
                         <div>
                             <ol>
-                                <li><h3>Shape 0:</h3> => {(props.probabilities[0] * 100).toFixed(2)} %</li>
-                                <li><h3>Shape 1:</h3> => {(props.probabilities[1] * 100).toFixed(2)} %</li>
-                                <li><h3>None:</h3>    => {(props.probabilities[2] * 100).toFixed(2)} %</li>
+                                <li><h3>Shape 0:</h3> {'⇨'} {(props.probabilities[0] * 100).toFixed(2)} %</li>
+                                <li><h3>Shape 1:</h3> {'⇨'} {(props.probabilities[1] * 100).toFixed(2)} %</li>
+                                <li><h3>None:</h3>    {'⇨'} {(props.probabilities[2] * 100).toFixed(2)} %</li>
                             </ol>
                         </div>
                     </div>

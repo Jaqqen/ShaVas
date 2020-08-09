@@ -82,32 +82,10 @@ ul {
     width: fit-content;
 }
 
-#sample-overlay {
-    -webkit-box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.75);
-    -moz-box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.75);
-    box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.75);
-    height: 480px;
-    padding: 30px 60px;
-    position: absolute;
-    width: 100%;
-}
-
-#sample-overlay.loading {
-    background-image: linear-gradient(to right, #fbc2eb 0%, #a6c1ee 51%, #fbc2eb 100%);
-}
-
 @keyframes loadingFrame {
     50% {
         background-position: right center;
     }
-}
-
-.loading {
-    animation-name: loadingFrame;
-    animation-iteration-count: infinite;
-    animation-timing-function: ease-in-out;
-    animation-duration: 2s;
-    background-size: 200% auto;
 }
 
 @keyframes finishedLoading {
@@ -122,30 +100,6 @@ ul {
     }
 }
 
-.finished {
-    animation-name: finishedLoading;
-    animation-iteration-count: 1;
-    animation-timing-function: ease-in;
-    animation-duration: 0.5s;
-    background-color: #66e08f;
-}
-
-#sample-button-group {
-    margin: auto;
-    width: fit-content;
-}
-
-.onOff {
-    opacity: 0;
-    z-index: -10;
-}
-
-#sample-content {
-    display: flex;
-    margin: 30px auto auto auto;
-    width: 600px;
-}
-
 #sample-list-wrapper {
     margin: auto 0 auto 30px;
     overflow: hidden;
@@ -156,20 +110,6 @@ ul {
     height: 275px;
     margin: 10px 0;
     overflow: scroll;
-}
-
-#sample-container-vertical-wrapper {
-    margin: auto;
-    width: 50%;
-}
-
-#sample-container-horizontal-wrapper {
-    margin: auto;
-    width: fit-content;
-}
-
-.sample-container {
-    margin: auto;
 }
 
 .select-shape-h3 {
@@ -204,11 +144,6 @@ ul {
 
 .sample-li-batch:hover {
     cursor: pointer;
-}
-
-#app-heading-container {
-    background-image: linear-gradient(to bottom, rgba(207, 244, 210, 0.7) 0%, #ffffff 90%);
-    width: 100%;
 }
 
 canvas {
@@ -252,8 +187,6 @@ button:hover {
 }
 
 .samples-tables-block-content-holder {
-    /* display: -moz-inline-grid;
-    display: -ms-inline-grid; */
     display: flex;
 }
 
@@ -356,16 +289,59 @@ ol {
     width: 300px;
 }
 
-#current-process {
-    animation-name: loadingFrame;
+.loading-process {
     animation-iteration-count: infinite;
     animation-timing-function: ease;
     animation-duration: 7s;
     background-size: 350% auto;
-    background-image: linear-gradient(to right, #ef629f 0%, #f0d3ad 40%, #ef629f 120%);
-    margin-top: 24px;
-    padding: 30px 60px;
+}
+
+
+.loading-process-sides {
+    animation-name: loadingFrame;
+
+    animation-iteration-count: infinite;
+    animation-timing-function: ease;
+    animation-duration: 7s;
+    background-size: 220% auto;
+}
+
+.left-process {
+    background-image: linear-gradient(to right, rgba(161, 255, 206, 0.74) 0%, rgba(255, 194, 144, 0.67) 50%, rgba(161, 255, 206, 0.74) 100%);
+    border-radius: 80%;
+    box-shadow: 0 0 20px 20px white inset;
+    left: -400px;
+    top: 0px;
     position: absolute;
+    width: 500px;
+    height: 800px;
+
+    z-index: -10;
+}
+
+.right-process {
+    transform: rotate(180deg);
+
+    background-image: linear-gradient(to right, rgba(161, 255, 206, 0.74) 0%, rgba(255, 194, 144, 0.67) 50%, rgba(161, 255, 206, 0.74) 100%);
+    border-radius: 80%;
+    box-shadow: 0 0 20px 20px white inset;
+    right: -400px;
+    top: 0px;
+    position: absolute;
+    width: 500px;
+    height: 800px;
+
+    z-index: -10;
+}
+
+.instructions {
+    animation-name: loadingFrame;
+
+    background-image: linear-gradient(to right, #ef629f 0%, #f0d3ad 40%, #ef629f 120%);
+
+    margin-top: 33px;
+    position: absolute;
+    padding: 30px 60px;
     width: 100%;
 }
 
@@ -383,4 +359,41 @@ ol {
 .default-samples-batch-text {
     margin: 200px auto 0;
     width: fit-content;
+}
+
+.starting-process-information {
+    color: #252629f5;
+    font-size: 1.5em;
+    font-weight: 700;
+    margin: auto;
+    margin-bottom: 40px;
+    margin-top: 20px;
+    width: fit-content;
+}
+
+.starting-process-information span {
+    margin-left: 25px;
+    margin-right: 25px;
+}
+
+.starting-process-information span i{
+    color: #2526298a;
+    font-weight: 500;
+}
+
+.app-heading-container {
+    background-image: linear-gradient(to right, rgba(102, 255, 176, 0.74) 0%, rgba(255, 194, 144, 0.67) 50%, rgba(102, 255, 176, 0.74) 100%);
+    border-radius: 50%;
+    box-shadow: 0 0 10px 10px white inset;
+    width: 100%;
+    z-index: -10;
+}
+
+.loading-v {
+    animation-name: loadingFrame;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-in-out;
+    animation-duration: 5s;
+    background-size: 220% auto;
+    margin-top: 0;
 }

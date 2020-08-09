@@ -22,14 +22,16 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-.vscode/
-
 # files
 *.pickle
 drawnImages/*.png
 *.h5
 backend/*/*.pyc
+
+#directories
+.vscode/
 backend/testingIMG/
 backend/samplesDir/
 frontend/src/shared/samplesDir/
 backend/responses
+backend/neural_network_data
