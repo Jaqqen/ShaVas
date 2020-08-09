@@ -7,9 +7,10 @@ import pytz
 import random
 import time
 import shutil
+import pickle
 
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed, wait, FIRST_COMPLETED
-from transformation_variants import getTranslationOfImage, getScaleOfImage, getRotationOfImage, getPerspectiveTransformationOfImage
+from transformation_variants import getTranslationOfImage, getScaleOfImage, getRotationOfImage, getPerspectiveTransformationOfImage, getMirrorOfImage
 from shavas_logger import logError, logInfo, logSuccess, logDebug
 
 ##################################
@@ -18,7 +19,8 @@ from shavas_logger import logError, logInfo, logSuccess, logDebug
 SAMPLES_LIST = []
 SHAPES_LIST = []
 PROCESS_LIST = []
-TRANSFORMATION_FUNCTIONS_LIST = [getPerspectiveTransformationOfImage, getTranslationOfImage, getScaleOfImage, getRotationOfImage]
+# TRANSFORMATION_FUNCTIONS_LIST = [getPerspectiveTransformationOfImage, getTranslationOfImage, getScaleOfImage, getRotationOfImage, getMirrorOfImage]
+TRANSFORMATION_FUNCTIONS_LIST = [getTranslationOfImage, getScaleOfImage, getRotationOfImage, getMirrorOfImage]
 PROCESS_COMBINATION_FILTER_SET = set()
 SAVED_BATCH_INFO_LIST = []
 
@@ -47,6 +49,8 @@ TIMES = {
 TIMEZONE = None
 SAMPLES_DIR = './samplesDir'
 RESPONSES_DIR = './responses'
+SAMPLES_PICKLE_PATH = './neural_network_data/samples'
+SHAPES_PICKLE_PATH = './neural_network_data/shapes'
 
 ##################################
 
@@ -152,11 +156,11 @@ def getFrontendSamplesList():
     try:
         for prcs in PROCESS_LIST:
             if (prcs.running() or
-                any(child_dict[_hasBeenRead] == False for child_dict in SAVED_BATCH_INFO_LIST) or
-                len(SAVED_BATCH_INFO_LIST) < (MAX_BATCHES_PER_IMG * 2)):
+                    any(child_dict[_hasBeenRead] == False for child_dict in SAVED_BATCH_INFO_LIST) or
+                    len(SAVED_BATCH_INFO_LIST) < (MAX_BATCHES_PER_IMG * 2)):
                 return (False, getSamplesInformationFromDoneProcesses())
-            else:
-                return (True, getSamplesInformationWhenAllCompleted())
+
+            return (True, getSamplesInformationWhenAllCompleted())
     except Exception as e:
         logError(f'Could not get Samples: {e}')
 
@@ -239,7 +243,7 @@ def getSamplesInformationWhenAllCompleted():
     global PROCESS_LIST, SAVED_BATCH_INFO_LIST
     global SAMPLES_LIST, SHAPES_LIST
     global TIMES, FINISH, START
-    global TIMEZONE
+    global TIMEZONE, SAMPLES_PICKLE_PATH, SHAPES_PICKLE_PATH
     global _image_index, _prcs_num, _samples_list
     SAMPLES_LIST.clear()
     SHAPES_LIST.clear()
@@ -260,6 +264,9 @@ def getSamplesInformationWhenAllCompleted():
                     logSuccess(f'{result_key}: {result[result_key]}')
             SAMPLES_LIST = SAMPLES_LIST + result[_samples_list]
             SHAPES_LIST = SHAPES_LIST + result[_shapes_list]
+
+        saveDataAsPickle(SAMPLES_PICKLE_PATH, SAMPLES_LIST)
+        saveDataAsPickle(SHAPES_PICKLE_PATH, SHAPES_LIST)
 
         return {
             'sample_list_batches': frontend_samples_list,
@@ -289,7 +296,6 @@ def setAndStartProcessesByAmount(desired_amount, image_list, timezone, imgs_per_
     PROCESS_LIST.clear()
     PROCESS_COMBINATION_FILTER_SET = set()
 
-
     try:
         for child_dir in os.listdir(SAMPLES_DIR):
             child_path = f'{SAMPLES_DIR}/{child_dir}'
@@ -305,25 +311,23 @@ def setAndStartProcessesByAmount(desired_amount, image_list, timezone, imgs_per_
         batches_per_prcs = math.ceil((desired_amount/p_needed)/BATCH_SIZE)
         MAX_BATCHES_PER_IMG = batches_per_prcs * p_needed
 
-        MAX_BATCHES_PER_IMG = math.ceil(desired_amount/BATCH_SIZE)
-
         TIMES[START] = time.perf_counter()
 
         start_time = getCurrentTimeByTimezone(timezone)
         logInfo(f'Started at: {start_time}')
 
-
         for index, image in enumerate(image_list):
             for i in range(p_needed):
+                deepcopied_image = copy.deepcopy(image)
                 if (i < p_needed-1):
-                    PROCESS_LIST.append(ProcessPoolExecutor().submit(createMultipleSampleWithProcesses, image, amount_per_p, index, (i, _PRCS)))
+                    PROCESS_LIST.append(ProcessPoolExecutor(max_workers=1).submit(createMultipleSampleWithProcesses, deepcopied_image, amount_per_p, index, (i, _PRCS)))
                 else:
-                    PROCESS_LIST.append(ProcessPoolExecutor().submit(createMultipleSampleWithProcesses, image, last_p_amount, index, (i, _PRCS)))
+                    PROCESS_LIST.append(ProcessPoolExecutor(max_workers=1).submit(createMultipleSampleWithProcesses, deepcopied_image, last_p_amount, index, (i, _PRCS)))
 
         return {
             'startTime': start_time,
             'batchesPerImg': MAX_BATCHES_PER_IMG,
-            'prcsStartedPerImg': p_needed * 2,
+            'prcsStartedPerImg': p_needed,
             'hasBeenStarted': True
         }
     except Exception as e:
@@ -356,3 +360,10 @@ def saveSamples(current_result_samples_list_batch, current_image_index, current_
         _path: current_batch_path,
         _hasBeenRead: False
     }
+
+def saveDataAsPickle(path, data):
+    pickle_path = path + '.pickle'
+
+    pickle_out = open(pickle_path, 'wb')
+    pickle.dump(data, pickle_out)
+    pickle_out.close()
