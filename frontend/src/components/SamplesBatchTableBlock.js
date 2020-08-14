@@ -12,7 +12,7 @@ export default class SamplesBatchTableBlock extends Component {
             currentSamplesBatch: null,
             currentlySelectedBatchIndex: null,
             isGenerating: props.isGenerating,
-            neuralNetworkHasBeenBuild: props.neuralNetworkHasBeenBuild,
+            hasNeuralNetworkBeenBuilt: props.hasNeuralNetworkBeenBuilt,
         };
 
         this.setCurrentSamplesBatch = this.setCurrentSamplesBatch.bind(this);
@@ -21,10 +21,10 @@ export default class SamplesBatchTableBlock extends Component {
     }
 
     renderingSamplesTableBlock() {
-        const { shapeNumber, isGenerating, neuralNetworkHasBeenBuild, samplesList } = this.props;
+        const { shapeNumber, isGenerating, hasNeuralNetworkBeenBuilt, samplesList } = this.props;
         // const { currentSamplesBatch, currentlySelectedBatchIndex } = this.state;
 
-        if (isGenerating || neuralNetworkHasBeenBuild) {
+        if (isGenerating || hasNeuralNetworkBeenBuilt) {
             return <div className="samples-tables-block-holder">
                         <h3>{shapeNumber+1}. Canvas Batches</h3>
                         <div className="samples-tables-block-content-holder">

@@ -9,7 +9,7 @@ export default class CanvasTemplate extends Component {
             canvasWidth: props._dimensions.w,
             idNumber: props.idNumber,
             isGenerating: props.isGenerating,
-            neuralNetworkHasBeenBuild: props.neuralNetworkHasBeenBuild,
+            hasNeuralNetworkBeenBuilt: props.hasNeuralNetworkBeenBuilt,
             painting: false,
         };
         this.canvasRef = React.createRef();
@@ -20,9 +20,9 @@ export default class CanvasTemplate extends Component {
     }
 
     static getDerivedStateFromProps(props, state) {
-        if (props.neuralNetworkHasBeenBuild !== state.neuralNetworkHasBeenBuild) {
-            state.neuralNetworkHasBeenBuild = props.neuralNetworkHasBeenBuild;
-            return props.neuralNetworkHasBeenBuild;
+        if (props.hasNeuralNetworkBeenBuilt !== state.hasNeuralNetworkBeenBuilt) {
+            state.hasNeuralNetworkBeenBuilt = props.hasNeuralNetworkBeenBuilt;
+            return props.hasNeuralNetworkBeenBuilt;
         }
         return null;
     }
@@ -54,21 +54,21 @@ export default class CanvasTemplate extends Component {
     }
 
     mouseDownHandler(props, e, ctx) {
-        if (!this.state.neuralNetworkHasBeenBuild) {
+        if (!this.state.hasNeuralNetworkBeenBuilt) {
             props.registerCanvasInteractions(this.props._id);
             this.setState({
                 painting: true
             });
             this.draw(e, ctx);
-        } else if (this.state.neuralNetworkHasBeenBuild) {
+        } else if (this.state.hasNeuralNetworkBeenBuilt) {
             const confirmResetOnInputCanvas = window.confirm('Do you want to start over?');
             if (confirmResetOnInputCanvas) {
                 props.resetInputCanvasLogic();
                 this.setState({
-                    neuralNetworkHasBeenBuild: false,
+                    hasNeuralNetworkBeenBuilt: false,
                 });
             }
-        } else if ((props.registerCanvasInteractions === undefined && this.state.neuralNetworkHasBeenBuild === undefined)) {
+        } else if ((props.registerCanvasInteractions === undefined && this.state.hasNeuralNetworkBeenBuilt === undefined)) {
             this.setState({
                 painting: true
             });
@@ -86,7 +86,7 @@ export default class CanvasTemplate extends Component {
     mouseMoveHandler(e, ctx) { this.draw(e, ctx); }
 
     shouldDrawBeExecuted() {
-        if (!this.state.painting || this.props.isGenerating || this.props.neuralNetworkHasBeenBuild) {
+        if (!this.state.painting || this.props.isGenerating || this.props.hasNeuralNetworkBeenBuilt) {
             return true;
         }
         return false;

@@ -23,7 +23,7 @@ export default class CanvasBlock extends Component {
                 <h2>{props.shapeNumber + 1 + '.'} Canvas</h2>
                 <CanvasTemplate
                     _dimensions={props.canvasDimensions}
-                    neuralNetworkHasBeenBuild={props.neuralNetworkHasBeenBuild}
+                    hasNeuralNetworkBeenBuilt={props.hasNeuralNetworkBeenBuilt}
                     idNumber={props.idNumber}
                     _id={props._id}
                     isGenerating={props.isGenerating}
@@ -34,7 +34,7 @@ export default class CanvasBlock extends Component {
                 />
                 <div className="button-container">
                     <button
-                        disabled={props.isGenerating || props.neuralNetworkHasBeenBuild}
+                        disabled={props.isGenerating || props.hasNeuralNetworkBeenBuilt}
                         onClick={this.state.clearFunction}
                         type='button'
                     >
