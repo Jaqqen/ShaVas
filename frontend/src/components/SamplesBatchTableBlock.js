@@ -11,8 +11,6 @@ export default class SamplesBatchTableBlock extends Component {
         this.state = {
             currentSamplesBatch: null,
             currentlySelectedBatchIndex: null,
-            isGenerating: props.isGenerating,
-            hasNeuralNetworkBeenBuilt: props.hasNeuralNetworkBeenBuilt,
         };
 
         this.setCurrentSamplesBatch = this.setCurrentSamplesBatch.bind(this);
@@ -21,10 +19,9 @@ export default class SamplesBatchTableBlock extends Component {
     }
 
     renderingSamplesTableBlock() {
-        const { shapeNumber, isGenerating, hasNeuralNetworkBeenBuilt, samplesList } = this.props;
-        // const { currentSamplesBatch, currentlySelectedBatchIndex } = this.state;
+        const { shapeNumber, shallRender, samplesList } = this.props;
 
-        if (isGenerating || hasNeuralNetworkBeenBuilt) {
+        if (shallRender !== null) {
             return <div className="samples-tables-block-holder">
                         <h3>{shapeNumber+1}. Canvas Batches</h3>
                         <div className="samples-tables-block-content-holder">
@@ -38,7 +35,9 @@ export default class SamplesBatchTableBlock extends Component {
                                     {this.renderSamplesBatches(samplesList, shapeNumber)}
                                 </React.Fragment>
                                 :
-                                <p className="default-samples-batch-text">Please wait for Batches to load.</p>
+                                <p className="default-samples-batch-text">
+                                    Please wait for Batches to load.
+                                </p>
                             }
                         </div>
                     </div>;
