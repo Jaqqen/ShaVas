@@ -17,9 +17,11 @@ export default class App extends Component {
                 timeSpent: null,
             },
             generatedSamples: {},
-            isGenerating: false,
+            isGenerating: {
+                neuralNetwork: false,
+                samples: false,
+            },
             minimumSampleSize: 1100,
-            neuralNetworkHasBeenBuild: false,
             probabilities: [],
             sample: {
                 isSet: false,
@@ -31,6 +33,7 @@ export default class App extends Component {
                 prcsStartedPerImg: null,
             },
             neuralNetworkBuildInformation: {
+                hasBeenBuilt: false,
                 hasBeenStarted: null,
                 startTime: null,
             }
@@ -51,6 +54,7 @@ export default class App extends Component {
         this.setGenerateButtonText = this.setGenerateButtonText.bind(this);
         this.buildNeuralNetwork = this.buildNeuralNetwork.bind(this);
         this.hasNeuralNetworkBuildFinished = this.hasNeuralNetworkBuildFinished.bind(this);
+        this.setNNGenerateButtonText = this.setNNGenerateButtonText.bind(this);
 
         // * Reference to canvas
         this.sampleCanvasRef = React.createRef();
@@ -77,29 +81,42 @@ export default class App extends Component {
     }
 
     buildNeuralNetwork() {
-            this.setState({
-                isGenerating: true,
-                neuralNetworkBuildInformation: {
-                    hasBeenStarted: true,
+        document.getElementById(ID.generateNNButtonId).disabled = true;
+
+        try {
+            this.setState(prevState => ({
+                isGenerating: {
+                    neuralNetwork: true,
+                    samples: false,
                 },
-                neuralNetworkHasBeenBuild: false,
-            });
-        setTimeout(() => {
-            FetchService.get('/buildNeuralNetwork', 'BuildNeuralNetwork', this.dataBuildNeuralNetwork);
-        }, 5000);
+                neuralNetworkBuildInformation: {
+                    ...prevState.neuralNetworkBuildInformation,
+                    hasBeenBuilt: false,
+                    hasBeenStarted: true,
+                }
+            }));
+
+            setTimeout(() => {
+                FetchService.get('/buildNeuralNetwork', 'BuildNeuralNetwork', this.dataBuildNeuralNetwork);
+            }, 5000);
+        } catch (error) {
+            document.getElementById(ID.generateNNButtonId).disabled = false;
+
+            console.error(error, new Date().toLocaleTimeString());
+        }
+
     }
 
     dataBuildNeuralNetwork(data) {
         if (data.hasBeenStarted) {
-            this.setState({
+            this.setState(prevState => ({
                 neuralNetworkBuildInformation: {
+                    ...prevState.neuralNetworkBuildInformation,
                     hasBeenStarted: data.hasBeenStarted,
                 }
-            });
+            }));
             this.hasNeuralNetworkBuildFinished();
-        } else {
-            this.buildNeuralNetwork();
-        }
+        } else { this.buildNeuralNetwork(); }
     }
 
     hasNeuralNetworkBuildFinished() {
@@ -110,10 +127,16 @@ export default class App extends Component {
 
     dataHasNeuralNetworkBuildFinished(data) {
         if (data.hasBeenBuilt) {
-            this.setState({
-                isGenerating: false,
-                neuralNetworkHasBeenBuild: data.hasBeenBuilt,
-            });
+            this.setState(prevState => ({
+                isGenerating: {
+                    ...prevState.isGenerating,
+                    neuralNetwork: false,
+                },
+                neuralNetworkBuildInformation: {
+                    ...prevState.neuralNetworkBuildInformation,
+                    hasBeenBuilt: data.hasBeenBuilt,
+                },
+            }));
         } else {
             this.hasNeuralNetworkBuildFinished();
         }
@@ -159,18 +182,19 @@ export default class App extends Component {
                         }
                     });
 
-                    this.setState({
+                    this.setState(prevState => ({
+                        isGenerating: {
+                            ...prevState.isGenerating,
+                            samples: false,
+                        },
                         finishingProcessInformation: {
                             endTime: frontendContent.end_time,
                             timeSpent: frontendContent.time_spent
                         },
                         generatedSamples: tempGeneratedSamples,
-                    });
+                    }));
 
-                    this.buildNeuralNetwork();
-                } else {
-                    this.getSamples(5000);
-                }
+                } else { this.getSamples(5000); }
             } else {
                 const sampleListBatches = data.sample_list_batches;
 
@@ -185,14 +209,10 @@ export default class App extends Component {
                     }
                 });
 
-                this.setState({
-                    generatedSamples: tempGeneratedSamples,
-                });
+                this.setState({ generatedSamples: tempGeneratedSamples, });
                 if (Array.isArray(sampleListBatches) && sampleListBatches.length) {
                     this.getSamples(5000);
-                } else {
-                    this.getSamples(20000);
-                }
+                } else { this.getSamples(20000); }
             }
         } catch (error) {
             console.error(error, new Date().toLocaleTimeString());
@@ -231,14 +251,19 @@ export default class App extends Component {
         try {
             this.getSamples(20000);
 
-            this.setState({
-                isGenerating: data.hasBeenStarted,
-                startingProcessInformation: {
-                    startTime: data.startTime,
-                    batchesPerImg: data.batchesPerImg,
-                    prcsStartedPerImg: data.prcsStartedPerImg,
-                }
-            });
+            if (data.hasBeenStarted) {
+                this.setState(prevState => ({
+                    isGenerating: {
+                        ...prevState.isGenerating,
+                        samples: true,
+                    },
+                    startingProcessInformation: {
+                        startTime: data.startTime,
+                        batchesPerImg: data.batchesPerImg,
+                        prcsStartedPerImg: data.prcsStartedPerImg,
+                    }
+                }));
+            } else { document.getElementById(ID.generateButtonId).disabled = false; }
         } catch (error) {
             document.getElementById(ID.generateButtonId).disabled = false;
         }
@@ -251,11 +276,11 @@ export default class App extends Component {
      * -> allCanvasHaveContent()
      */
     disableGenerateButton() {
-        const { neuralNetworkHasBeenBuild, isGenerating, sample } = this.state;
+        const { neuralNetworkBuildInformation, isGenerating, sample } = this.state;
 
         if (!this.allCanvasHaveContent() ||
-            neuralNetworkHasBeenBuild ||
-            isGenerating ||
+            neuralNetworkBuildInformation.hasBeenBuilt ||
+            isGenerating.samples ||
             !sample.isSet) { return true; }
 
         return false;
@@ -268,11 +293,11 @@ export default class App extends Component {
      * -> allCanvasHaveContent()
      */
     disableSampleInput() {
-        const { neuralNetworkHasBeenBuild, isGenerating } = this.state;
+        const { neuralNetworkBuildInformation, isGenerating } = this.state;
 
         if (!this.allCanvasHaveContent() ||
-            neuralNetworkHasBeenBuild ||
-            isGenerating) { return true; }
+            neuralNetworkBuildInformation.hasBeenBuilt ||
+            isGenerating.samples) { return true; }
 
         return false;
     }
@@ -322,13 +347,12 @@ export default class App extends Component {
     }
 
     renderStartingProcessInformation() {
-        const { startTime, batchesPerImg, prcsStartedPerImg } = this.state.startingProcessInformation;
+        const { startTime, batchesPerImg } = this.state.startingProcessInformation;
 
         return (
             <React.Fragment>
                 <span>Start: <i>{startTime}</i></span>
                 <span>Batches per image: <i>{batchesPerImg}</i></span>
-                <span>Processes started per image: <i>{prcsStartedPerImg}</i></span>
             </React.Fragment>
         );
     }
@@ -388,12 +412,10 @@ export default class App extends Component {
      * -> disableSampleInput()
      */
     setGenerateButtonText() {
-        const { isGenerating, minimumSampleSize, neuralNetworkHasBeenBuild, sample } = this.state;
+        const { isGenerating, minimumSampleSize, sample } = this.state;
         if (this.allCanvasHaveContent()) {
-            if (isGenerating) {
-                return 'Generating samples and Neural Network';
-            } else if (neuralNetworkHasBeenBuild) {
-                return 'Complete';
+            if (isGenerating.samples) {
+                return 'Generating samples';
             } else if (!this.disableSampleInput() && sample.amount < minimumSampleSize) {
                 return 'Need sample amount';
             } else {
@@ -434,12 +456,20 @@ export default class App extends Component {
     }
 
     setLowerHalfText() {
-        const { isGenerating, neuralNetworkBuildInformation, neuralNetworkHasBeenBuild } = this.state;
+        const { isGenerating, finishingProcessInformation } = this.state;
 
-        if (neuralNetworkBuildInformation.hasBeenStarted && neuralNetworkHasBeenBuild === false) {
-            return 'Neural network is now building, please wait.';
-        } else if ( isGenerating) {
-            return 'Please wait until samples have been generated.';
+        const instructionsWrapper = (text) => {
+            return <div className="loading-process instructions">
+                {text}
+            </div>
+        };
+
+        if ( isGenerating.neuralNetwork ) {
+            return instructionsWrapper('Neural network is now building, please wait.');
+        } else if ( isGenerating.samples ) {
+            return instructionsWrapper('Please wait until samples have been generated.');
+        } else if ( finishingProcessInformation.endTime !== null) {
+            return;
         } else {
             const instructionText = [
                 'Draw two simple shapes.',
@@ -462,7 +492,7 @@ export default class App extends Component {
                     {line}
                 </p>;
 
-            return <div id={ID.lowerHalfTextId}>
+            return instructionsWrapper(<div id={ID.lowerHalfTextId}>
                 {instructionText.map((line, index) => {
                     if (!this.allCanvasHaveContent()) {
                         if (index === 0) { return higlightedLine(line, index); }
@@ -478,16 +508,32 @@ export default class App extends Component {
                     }
                     return null;
                 })}
-            </div>;
+            </div>);
         }
     }
 
-    // >>> GET - Ask user if he wants to start with an existing NN
-    startWithExistingNN() {
-        const confirmStart = window.confirm('Do you want to start with an existing NN?');
-        if (confirmStart) {
-            FetchService.get('/start_with_existing_nn', 'StartWithExistingNN', this.dataStartWithExistingNN);
+    setNNGenerateButtonText() {
+        const { neuralNetworkBuildInformation, finishingProcessInformation } = this.state;
+        if (this.allCanvasHaveContent()) {
+            if (finishingProcessInformation.endTime !== null) {
+                if (!neuralNetworkBuildInformation.hasBeenBuilt) {
+                    if (neuralNetworkBuildInformation.hasBeenStarted === true) {
+                        return 'Training Neural Network';
+                    } else {
+                        return 'Start training Neural Network';
+                    }
+                } else { return 'Complete'; }
+            } else {
+                return '';
+            }
         }
+    }
+
+    getLoadingStatus() {
+        const { isGenerating } = this.state;
+
+        if (isGenerating.samples || isGenerating.neuralNetwork) { return true; }
+        return false
     }
 
     render() {
@@ -495,14 +541,13 @@ export default class App extends Component {
         const shapeNumber = {zero: 0, one:1};
 
         const {
-            isGenerating, doesProbabilitiesExist, minimumSampleSize, neuralNetworkHasBeenBuild,
-            probabilities, generatedSamples, startingProcessInformation, finishingProcessInformation,
-            neuralNetworkBuildInformation
+            isGenerating, doesProbabilitiesExist, minimumSampleSize, neuralNetworkBuildInformation,
+            probabilities, generatedSamples, startingProcessInformation, finishingProcessInformation
         } = this.state;
 
         return (
             <div>
-                <div className={isGenerating && neuralNetworkBuildInformation.hasBeenStarted === null ? "loading-v app-heading-container": ""}>
+                <div className={this.getLoadingStatus() ? "loading-v app-heading-container": ""}>
                     <h1>ShaVas</h1>
                 </div>
                 <div>
@@ -524,11 +569,11 @@ export default class App extends Component {
                         }
                     </div>
                     <div className="App">
-                        <div className={isGenerating && neuralNetworkBuildInformation.hasBeenStarted === null ? "loading-process-sides left-process" : ""}></div>
-                        <div className={isGenerating && neuralNetworkBuildInformation.hasBeenStarted === null ? "loading-process-sides right-process" : ""}></div>
+                        <div className={this.getLoadingStatus() ? "loading-process-sides left-process" : ""}></div>
+                        <div className={this.getLoadingStatus() ? "loading-process-sides right-process" : ""}></div>
                         <SamplesBatchTableBlock
-                            isGenerating={isGenerating}
-                            neuralNetworkHasBeenBuild={neuralNetworkHasBeenBuild}
+                            shallRender={startingProcessInformation.startTime}
+                            hasNeuralNetworkBeenBuilt={neuralNetworkBuildInformation.hasBeenBuilt}
                             samplesList={generatedSamples[shapeNumber.zero]}
                             shapeNumber={shapeNumber.zero}
                         />
@@ -536,25 +581,25 @@ export default class App extends Component {
                             _id={ID.shapeOneId}
                             canvasDimensions={dimensions}
                             isGenerating={isGenerating}
-                            neuralNetworkHasBeenBuild={neuralNetworkHasBeenBuild}
                             registerCanvasInteractions={this.registerCanvasInteractions}
                             resetInputCanvasLogic={this.resetInputCanvasLogic}
                             registerClearActivity={this.registerClearActivity}
                             shapeNumber={shapeNumber.zero}
+                            startingProcessesTime={startingProcessInformation.startTime}
                         />
                         <CanvasBlock
                             _id={ID.shapeTwoId}
                             canvasDimensions={dimensions}
                             isGenerating={isGenerating}
-                            neuralNetworkHasBeenBuild={neuralNetworkHasBeenBuild}
                             registerCanvasInteractions={this.registerCanvasInteractions}
                             resetInputCanvasLogic={this.resetInputCanvasLogic}
                             registerClearActivity={this.registerClearActivity}
                             shapeNumber={shapeNumber.one}
+                            startingProcessesTime={startingProcessInformation.startTime}
                         />
                         <SamplesBatchTableBlock
-                            isGenerating={isGenerating}
-                            neuralNetworkHasBeenBuild={neuralNetworkHasBeenBuild}
+                            shallRender={startingProcessInformation.startTime}
+                            hasNeuralNetworkBeenBuilt={neuralNetworkBuildInformation.hasBeenBuilt}
                             samplesList={generatedSamples[shapeNumber.one]}
                             shapeNumber={shapeNumber.one}
                         />
@@ -572,17 +617,28 @@ export default class App extends Component {
                                 step={1000}
                             />
                         </div>
-                        <button
-                            id={ID.generateButtonId}
-                            disabled={this.disableGenerateButton()}
-                            type='button'
-                            onClick={this.sendImagesDataToBackend}>
-                            {this.setGenerateButtonText()}
-                        </button>
+                        {
+                            finishingProcessInformation.endTime === null ?
+                                <button
+                                    id={ID.generateButtonId}
+                                    disabled={this.disableGenerateButton()}
+                                    type='button'
+                                    onClick={this.sendImagesDataToBackend}>
+                                    {this.setGenerateButtonText()}
+                                </button>
+                                :
+                                <button
+                                    id={ID.generateNNButtonId}
+                                    disabled={neuralNetworkBuildInformation.hasBeenStarted ? true : false}
+                                    type="button"
+                                    onClick={this.buildNeuralNetwork}>
+                                    {this.setNNGenerateButtonText()}
+                                </button>
+                        }
                     </div>
                 </div>
                 {
-                    neuralNetworkHasBeenBuild ?
+                    neuralNetworkBuildInformation.hasBeenBuilt ?
                         <div id={ID.identifyerContainerId}>
                             <IdentifcationCanvasBlock
                                 _id={ID.shapeIdentificationId}
@@ -593,11 +649,9 @@ export default class App extends Component {
                             />
                         </div>
                         :
-                        <div className="loading-process instructions">
-                            {this.setLowerHalfText()}
-                        </div>
+                        this.setLowerHalfText()
                 }
-            </div >
+            </div>
         );
     }
 };

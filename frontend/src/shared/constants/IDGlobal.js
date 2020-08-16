@@ -1,5 +1,6 @@
 export const generateButtonContainerId = "generate-button-container";
 export const generateButtonId = "generate-button";
+export const generateNNButtonId = "generate-nn-button";
 export const identificationCanvasBlockId = "identification-canvas-block";
 export const identificationCanvasProbabilities = "identification-canvas-probabilities";
 export const identifyerContainerId = "identifyer-container";
