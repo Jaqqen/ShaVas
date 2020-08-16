@@ -34,7 +34,7 @@ export default class App extends Component {
             },
             neuralNetworkBuildInformation: {
                 hasBeenBuilt: false,
-                hasBeenStarted: null,
+                hasBeenStarted: false,
                 startTime: null,
             }
         };
@@ -108,7 +108,7 @@ export default class App extends Component {
     }
 
     dataBuildNeuralNetwork(data) {
-        if (data.hasBeenStarted) {
+        if (data.hasBeenStarted !== null && data.hasBeenStarted) {
             this.setState(prevState => ({
                 neuralNetworkBuildInformation: {
                     ...prevState.neuralNetworkBuildInformation,
@@ -538,7 +538,7 @@ export default class App extends Component {
 
     render() {
         const dimensions = { h: 400, w: 400 };
-        const shapeNumber = {zero: 0, one:1};
+        const shapeNumber = {zero: 0, one: 1};
 
         const {
             isGenerating, doesProbabilitiesExist, minimumSampleSize, neuralNetworkBuildInformation,
