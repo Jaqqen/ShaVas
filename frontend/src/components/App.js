@@ -442,10 +442,10 @@ export default class App extends Component {
         const { sample, isGenerating } = this.state;
 
         if (!this.haveAllCanvasContent()) {
-            return getHighlightedText('Draw two simple shapes.');
+            return getHighlightedText('Draw two simple shapes');
         } else if (this.haveAllCanvasContent() && !sample.isSet) {
             return getHighlightedText(
-                'Set the number of samples you want to generate with the drawn shapes.'
+                'Set the number of samples you want to generate with the drawn shapes'
             );
         } else if (sample.isSet && !isGenerating.samples ) {
             return (
@@ -457,13 +457,13 @@ export default class App extends Component {
                             {'Generate samples!'}
                     </button>
                     {getFinishingHighlightedText(
-                        'Generate shapes and wait until this panel disappears and another canvas appears.'
+                        'Generate shapes and wait until the process has been finished'
                     )}
                 </React.Fragment>
             );
         } else {
             return getLoadingHighlightedText(
-                'Please wait until your samples have been generated.'
+                'Please wait until your samples have been generated'
             );
         }
 
@@ -486,7 +486,7 @@ export default class App extends Component {
             );
         } else {
             return getLoadingHighlightedText(
-                'Please wait until the neural network has been trained.'
+                'Please wait until the neural network has been trained'
             );
         }
     }

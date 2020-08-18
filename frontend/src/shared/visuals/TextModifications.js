@@ -3,9 +3,11 @@ import React from 'react';
 export const instructionsWrapper = (instructionsClassName, _text) => {
     return (
         <div className={instructionsClassName}>
-            <p className="instructions-text">
-                <b style={{ fontSize: '1.6em' }}>{_text}</b>
-            </p>
+            <div className="strikIn-instructions">
+                <p className="instructions-text">
+                    <b style={{ fontSize: '1.6em' }}>{_text}</b>
+                </p>
+            </div>
     </div>
 )};
 
