@@ -346,8 +346,8 @@ ol {
 }
 
 .strikIn-instructions {
-    -webkit-animation: slide-fwd-right 0.9s cubic-bezier(0.47, 0, 0.85, 1.13) forwards;
-            animation: slide-fwd-right 0.9s cubic-bezier(0.47, 0, 0.85, 1.13) forwards;
+    -webkit-animation: slide-fwd-right 0.37s cubic-bezier(0.47, 0, 0.85, 1.13) forwards;
+            animation: slide-fwd-right 0.37s cubic-bezier(0.47, 0, 0.85, 1.13) forwards;
 }
 
 
@@ -379,7 +379,7 @@ ol {
 
     background-image: linear-gradient(to right, rgba(102, 255, 176, 0.74) 0%, rgba(255, 194, 144, 0.67) 50%, rgba(102, 255, 176, 0.74) 100%);
 
-    margin-top: 57px;
+    margin-top: 43px;
     position: absolute;
     padding: 29px 60px;
     width: 100%;
@@ -414,7 +414,7 @@ ol {
     font-size: 1.5em;
     font-weight: 700;
     margin: auto;
-    margin-bottom: 40px;
+    margin-bottom: 30px;
     margin-top: 20px;
     width: fit-content;
 }

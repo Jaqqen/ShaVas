@@ -39,7 +39,8 @@ export default class App extends Component {
                 hasBeenBuilt: false,
                 hasBeenStarted: false,
                 startTime: null,
-            }
+            },
+            frontEndStartTime: null,
         };
         this.state = { ...this.initState }
 
@@ -268,7 +269,8 @@ export default class App extends Component {
                         startTime: data.startTime,
                         batchesPerImg: data.batchesPerImg,
                         prcsStartedPerImg: data.prcsStartedPerImg,
-                    }
+                    },
+                    frontEndStartTime: new Date().getTime(),
                 }));
             } else { document.getElementById(ID.generateButtonId).disabled = false; }
         } catch (error) {
@@ -332,25 +334,65 @@ export default class App extends Component {
     }
 
     renderStartingProcessInformation() {
-        const { startTime, batchesPerImg } = this.state.startingProcessInformation;
+        const { startingProcessInformation } = this.state;
 
-        return (
-            <React.Fragment>
-                <span>Start: <i>{startTime}</i></span>
-                <span>Batches per image: <i>{batchesPerImg}</i></span>
-            </React.Fragment>
-        );
+        if (Object.values(startingProcessInformation).some((val) => val !== null)) {
+            return (
+                <React.Fragment>
+                    <span>Start: <i>{startingProcessInformation.startTime}</i></span>
+                    <span>Batches per image: <i>{startingProcessInformation.batchesPerImg}</i></span>
+                </React.Fragment>
+            );
+        }
+
+        return null;
     }
 
     renderFinishingProcessInformation() {
-        const { endTime, timeSpent } = this.state.finishingProcessInformation;
+        const { finishingProcessInformation, isGenerating, frontEndStartTime } = this.state;
 
-        return (
-            <React.Fragment>
-                <span>End: <i>{endTime}</i></span>
-                <span>Time spent: <i>{timeSpent}</i></span>
-            </React.Fragment>
-        );
+        let processTimer;
+
+        if (Object.values(finishingProcessInformation).some((val) => val !== null)) {
+            if (processTimer !== null) { clearInterval(processTimer); }
+
+            return (
+                <React.Fragment>
+                    ••• 
+                    <span>End: <i>{finishingProcessInformation.endTime}</i></span>
+                    <span>Time spent: <i>{finishingProcessInformation.timeSpent}</i></span>
+                </React.Fragment>
+            )
+        } else if (isGenerating.samples) {
+            processTimer = setInterval(() => {
+                const now = new Date().getTime();
+    
+                const distance = now - frontEndStartTime;
+    
+                const minutes = Math.floor((distance % (1000 * 60 * 60) / (1000 * 60)));
+                const seconds = Math.floor((distance % (1000 * 60) / 1000));
+                console.log(minutes, seconds);
+
+                if (document.getElementById("frontend-timer") !== null) {
+                    const frontendTimer = document.getElementById("frontend-timer");
+                    let minutesVisuals = minutes; 
+                    let secondsVisuals = seconds;
+                    if (minutes < 10) { minutesVisuals = "0" + minutes }
+                    if (seconds < 10) { secondsVisuals = "0" + seconds }
+
+                    frontendTimer.innerHTML = minutesVisuals + ":" + secondsVisuals
+                } else { clearInterval(processTimer); }
+
+
+            }, 1000);
+            return(
+                <React.Fragment>
+                    ••• <p id="frontend-timer" style={{ margin: 0, marginLeft: '10px', fontSize: '1.2em' }}></p>
+                </React.Fragment>
+            );
+        }
+
+        return null;
     }
 
     /**
@@ -513,7 +555,7 @@ export default class App extends Component {
 
         const {
             isGenerating, minimumSampleSize, neuralNetworkBuildInformation,
-            generatedSamples, startingProcessInformation, finishingProcessInformation
+            generatedSamples, startingProcessInformation
         } = this.state;
 
         return (
@@ -523,21 +565,8 @@ export default class App extends Component {
                 </div>
                 <div>
                     <div className="starting-process-information">
-                        {
-                            Object.values(startingProcessInformation).some((val) => val !== null) ?
-                                this.renderStartingProcessInformation()
-                                :
-                                null
-                        }
-                        {
-                            Object.values(finishingProcessInformation).some((val) => val !== null) ?
-                                <React.Fragment>
-                                     ••• 
-                                    {this.renderFinishingProcessInformation()}
-                                </React.Fragment>
-                                :
-                                null
-                        }
+                        { this.renderStartingProcessInformation() }
+                        { this.renderFinishingProcessInformation() }
                     </div>
                     <div className="App">
                         <div className={

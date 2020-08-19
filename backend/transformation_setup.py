@@ -242,7 +242,6 @@ def getSamplesInformationFromDoneProcesses():
 def getSamplesInformationWhenAllCompleted():
     global PROCESS_LIST, SAVED_BATCH_INFO_LIST
     global SAMPLES_LIST, SHAPES_LIST
-    global TIMES, FINISH, START
     global TIMEZONE, SAMPLES_PICKLE_PATH, SHAPES_PICKLE_PATH
     global _image_index, _prcs_num, _samples_list
     SAMPLES_LIST.clear()
@@ -252,10 +251,9 @@ def getSamplesInformationWhenAllCompleted():
     frontend_samples_list = getSamplesInformationFromDoneProcesses()
 
     try:
-        TIMES[FINISH] = time.perf_counter()
         end_time = getCurrentTimeByTimezone(TIMEZONE)
+        time_spent = getTimeSpent()
         logInfo(f'Finished at: {end_time}')
-        time_spent = round(TIMES[FINISH]-TIMES[START], 3)
         logInfo(f'Finished in {time_spent} seconds')
         for future_obj in as_completed(PROCESS_LIST):
             result = future_obj.result()
@@ -367,3 +365,17 @@ def saveDataAsPickle(path, data):
     pickle_out = open(pickle_path, 'wb')
     pickle.dump(data, pickle_out)
     pickle_out.close()
+
+
+def getTimeSpent():
+    global TIMES, FINISH, START
+
+    TIMES[FINISH] = time.perf_counter()
+
+    minutes = int(round(round(TIMES[FINISH]-TIMES[START], 0) / 60, 0))
+    seconds = int(round(round(TIMES[FINISH]-TIMES[START], 0) % 60, 0))
+
+    minutesString = f'{minutes}' if (minutes > 10) else f'0{minutes}'
+    secondsString = f'{seconds}' if (seconds > 10) else f'0{seconds}'
+
+    return f'{minutesString}:{secondsString}'
