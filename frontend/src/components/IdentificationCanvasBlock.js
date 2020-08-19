@@ -31,10 +31,10 @@ export default class IdentifcationCanvasBlock extends Component {
                         identificationBlock={this.identificationBlock}
                     />
                     <div className="button-container">
-                        <button type='button' onClick={this.state.clearFunction}>
+                        <button className="identification-canvas-button" type='button' onClick={this.state.clearFunction}>
                             Clear Canvas
                         </button>
-                        <button type='button' onClick={props.identifyCanvasContent}>
+                        <button className="identification-canvas-button" type='button' onClick={props.identifyCanvasContent}>
                             Identify Drawing
                         </button>
                     </div>

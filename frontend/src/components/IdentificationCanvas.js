@@ -89,14 +89,14 @@ export default class IdentificationCanvas extends Component {
     const props = this.props;
 
     return (
-      <React.Fragment>
+      <div className="identification-canvas-wrapper">
         <canvas
           id={props._id}
           ref={this.canvasRef}
           height={props._dimensions.h}
           width={props._dimensions.w}
         />
-      </React.Fragment>
+      </div>
     )
   }
 }
